@@ -28,48 +28,56 @@ class DashboardWebSocket {
     }
 
     onOpen(event) {
-        console.log('✅ WebSocket connected - relay mode (push only, no polling)');
+        console.log('✅ Connected - listening for real-time updates');
         this.reconnectAttempts = 0;
         
         // Update connection status indicator
-        this.updateConnectionStatus(true);
+        this.updateConnectionStatus('live');
         
-        // Request initial status once only
+        // ONE-TIME initial status request - then rely on pushed updates only
         this.send({ command: 'request_status' });
-        this.send({ command: 'request_stats' });
         
-        // NO POLLING - rely on server push from bot_api broadcasts
-        console.log('� Listening for pushed updates from bot...');
+        console.log('📡 Push mode active - NO POLLING');
     }
 
     onMessage(event) {
         try {
             const message = JSON.parse(event.data);
-            console.log('📨 WebSocket message:', message);
+            console.log('📨 Pushed update received:', message.type);
             
-            // Route message by type
+            // Route pushed messages by type - NO POLLING
             switch (message.type) {
                 case 'status':
-                    this.updateStatus(message.data);
+                    this.updateDashboard(message.data);
                     break;
-                case 'trade':
+                    
+                case 'trade_executed':
+                    // Real-time trade notification from bot
                     this.handleNewTrade(message.data);
                     break;
-                case 'price':
+                    
+                case 'price_update':
+                    // Real-time price update from bot
                     this.updatePrice(message.data);
                     break;
+                    
                 case 'stats':
                     this.updateStats(message.data);
                     break;
+                    
                 case 'status_change':
+                    // Bot started/stopped
                     this.handleStatusChange(message.data);
                     break;
+                    
                 case 'bot_control':
                     this.handleBotControl(message.data);
                     break;
+                    
                 case 'error':
                     this.handleError(message.data);
                     break;
+                    
                 default:
                     console.warn('Unknown message type:', message.type);
             }
@@ -80,11 +88,9 @@ class DashboardWebSocket {
 
     onClose(event) {
         console.log('❌ WebSocket disconnected');
-        this.updateConnectionStatus(false);
+        this.updateConnectionStatus('disconnected');
         
-        // NO POLLING - connection closed, will rely on push after reconnect
-        
-        // Attempt to reconnect
+        // NO POLLING - will reconnect and rely on push updates
         this.handleReconnect();
     }
 
@@ -97,33 +103,43 @@ class DashboardWebSocket {
             this.reconnectAttempts++;
             console.log(`🔄 Reconnecting... Attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
             
-            this.updateConnectionStatus(false, 'Reconnecting...');
+            this.updateConnectionStatus('reconnecting');
             
             setTimeout(() => {
                 this.connect();
             }, this.reconnectDelay);
         } else {
             console.error('❌ Max reconnection attempts reached');
-            this.updateConnectionStatus(false, 'Connection failed');
+            this.updateConnectionStatus('failed');
         }
     }
 
-    updateConnectionStatus(isConnected, customMessage = null) {
+    updateConnectionStatus(status) {
         const statusElement = document.getElementById('connection-status');
         if (statusElement) {
-            if (isConnected) {
-                statusElement.innerHTML = '🟢 Connected';
-                statusElement.className = 'connection-status connected';
-            } else {
-                const message = customMessage || 'Disconnected';
-                statusElement.innerHTML = `🔴 ${message}`;
-                statusElement.className = 'connection-status disconnected';
+            switch(status) {
+                case 'live':
+                    statusElement.innerHTML = '🟢 Live';
+                    statusElement.className = 'connection-status connected';
+                    break;
+                case 'reconnecting':
+                    statusElement.innerHTML = '🟡 Reconnecting...';
+                    statusElement.className = 'connection-status reconnecting';
+                    break;
+                case 'disconnected':
+                    statusElement.innerHTML = '🔴 Disconnected';
+                    statusElement.className = 'connection-status disconnected';
+                    break;
+                case 'failed':
+                    statusElement.innerHTML = '🔴 Connection Failed';
+                    statusElement.className = 'connection-status disconnected';
+                    break;
             }
         }
     }
 
-    updateStatus(data) {
-        console.log('Updating status:', data);
+    updateDashboard(data) {
+        console.log('📊 Dashboard update:', data);
         
         // Update bot status indicator
         const botStatusElement = document.querySelector('[data-bot-status]');
@@ -178,46 +194,86 @@ class DashboardWebSocket {
     }
 
     handleNewTrade(data) {
-        console.log('📊 New trade pushed from bot:', data);
-        
-        // Show notification
         const action = data.action || 'TRADE';
         const price = data.price || 0;
-        const message = `${action} at $${price.toLocaleString()}`;
+        const amount = data.amount || 0;
+        const position = data.position || 'UNKNOWN';
         
-        showNotification('New Trade!', message, action === 'BUY' ? 'success' : 'info');
+        console.log(`🔔 Trade Executed: ${action} at $${price.toLocaleString()}`);
         
-        // Flash the screen
-        this.flashScreen(action === 'BUY' ? 'green' : 'blue');
+        // Show prominent toast notification (10 seconds)
+        showNotification(
+            '🔔 Trade Executed!', 
+            `${action} ${amount} BTC at $${price.toLocaleString()}`, 
+            action === 'BUY' ? 'success' : 'info',
+            10000
+        );
         
-        // NO POLLING - updates will be pushed automatically by bot
-        // The trade broadcast should include updated status/stats
+        // Flash entire page green (buy) or red (sell)
+        this.flashScreen(action === 'BUY' ? 'green' : 'red');
         
-        // Optionally play sound
+        // Update position indicator immediately
+        const positionElement = document.querySelector('[data-position]');
+        if (positionElement) {
+            positionElement.textContent = position;
+            positionElement.setAttribute('data-position', position);
+        }
+        
+        // Update balance display if provided
+        if (data.balance) {
+            const btcBalanceElement = document.getElementById('btc-balance');
+            const usdtBalanceElement = document.getElementById('usdt-balance');
+            
+            if (btcBalanceElement && data.balance.BTC) {
+                btcBalanceElement.textContent = parseFloat(data.balance.BTC).toFixed(6);
+            }
+            if (usdtBalanceElement && data.balance.USDT) {
+                usdtBalanceElement.textContent = parseFloat(data.balance.USDT).toFixed(2);
+            }
+        }
+        
+        // Prepend to trade history table (if exists)
+        this.prependTradeToTable(data);
+        
+        // Request fresh stats after trade
+        this.send({ command: 'request_stats' });
+        
+        // Play notification sound (optional - uncomment to enable)
         // this.playNotificationSound();
     }
 
     updatePrice(data) {
-        console.log('Price update:', data);
-        
         const priceElement = document.querySelector('[data-price]');
         if (priceElement && data.price) {
             const oldPrice = parseFloat(priceElement.getAttribute('data-price') || 0);
             const newPrice = parseFloat(data.price);
             
+            // Update price display with animation
             priceElement.textContent = `$${newPrice.toLocaleString()}`;
             priceElement.setAttribute('data-price', newPrice);
             
-            // Flash based on direction
+            // Show price direction indicator with flash
             if (oldPrice > 0) {
-                if (newPrice > oldPrice) {
-                    this.flashElement(priceElement, 'flash-green');
-                } else if (newPrice < oldPrice) {
-                    this.flashElement(priceElement, 'flash-red');
+                const direction = newPrice > oldPrice ? '↑' : newPrice < oldPrice ? '↓' : '→';
+                const directionClass = newPrice > oldPrice ? 'flash-green' : newPrice < oldPrice ? 'flash-red' : '';
+                
+                // Flash animation based on direction
+                if (directionClass) {
+                    this.flashElement(priceElement, directionClass);
+                }
+                
+                // Show direction indicator (optional)
+                const directionElement = document.querySelector('[data-price-direction]');
+                if (directionElement) {
+                    directionElement.textContent = direction;
+                    directionElement.className = newPrice > oldPrice ? 'text-success' : newPrice < oldPrice ? 'text-danger' : '';
                 }
             }
+            
+            console.log(`💰 Price update: $${newPrice.toLocaleString()}`);
         }
         
+        // Update "Last Updated" timestamp
         this.updateLastUpdateTime();
     }
 
@@ -250,15 +306,24 @@ class DashboardWebSocket {
     }
 
     handleStatusChange(data) {
-        console.log('Status change:', data);
+        const status = data.status || (data.bot_running ? 'running' : 'stopped');
+        const isRunning = status === 'running';
         
-        const isRunning = data.bot_running;
-        const message = isRunning ? 'Bot Started' : 'Bot Stopped';
+        console.log(`⚡ Status Change: Bot ${status.toUpperCase()}`);
         
-        showNotification('Status Change', message, 'warning');
+        // Update bot status indicator
+        const botStatusElement = document.querySelector('[data-bot-status]');
+        if (botStatusElement) {
+            botStatusElement.textContent = isRunning ? 'Running' : 'Stopped';
+            botStatusElement.className = `badge ${isRunning ? 'badge-success' : 'badge-secondary'}`;
+            botStatusElement.setAttribute('data-bot-status', isRunning);
+        }
         
-        // Request fresh status
-        this.send({ command: 'get_status' });
+        // Show notification about status change
+        const message = isRunning ? '✅ Bot Started' : '⏹️ Bot Stopped';
+        showNotification('Status Change', message, isRunning ? 'success' : 'warning', 5000);
+        
+        // NO POLLING - status updates will be pushed automatically
     }
 
     handleBotControl(data) {
@@ -281,6 +346,34 @@ class DashboardWebSocket {
         setTimeout(() => {
             element.classList.remove(className);
         }, 500);
+    }
+
+    prependTradeToTable(tradeData) {
+        const tradeTableBody = document.querySelector('#trades-table tbody');
+        if (!tradeTableBody) return;
+        
+        const row = document.createElement('tr');
+        row.className = 'trade-row-new';
+        
+        const timestamp = new Date().toLocaleString();
+        const action = tradeData.action || 'N/A';
+        const price = tradeData.price ? `$${parseFloat(tradeData.price).toLocaleString()}` : 'N/A';
+        const amount = tradeData.amount ? parseFloat(tradeData.amount).toFixed(6) : 'N/A';
+        const profit = tradeData.profit_pct ? `${parseFloat(tradeData.profit_pct).toFixed(2)}%` : '-';
+        
+        row.innerHTML = `
+            <td>${timestamp}</td>
+            <td><span class="badge badge-${action === 'BUY' ? 'success' : 'info'}">${action}</span></td>
+            <td>${price}</td>
+            <td>${amount}</td>
+            <td class="${parseFloat(tradeData.profit_pct || 0) >= 0 ? 'text-success' : 'text-danger'}">${profit}</td>
+        `;
+        
+        // Insert at the top
+        tradeTableBody.insertBefore(row, tradeTableBody.firstChild);
+        
+        // Highlight animation
+        setTimeout(() => row.classList.remove('trade-row-new'), 2000);
     }
 
     flashScreen(color) {
@@ -325,6 +418,18 @@ class DashboardWebSocket {
         }
     }
 
+    playNotificationSound() {
+        // Optional: Play notification sound for trades
+        // Uncomment and customize as needed
+        try {
+            const audio = new Audio('/static/sounds/notification.mp3');
+            audio.volume = 0.5;
+            audio.play().catch(err => console.log('Audio play failed:', err));
+        } catch (err) {
+            console.log('Notification sound not available');
+        }
+    }
+
     send(message) {
         if (this.ws && this.ws.readyState === WebSocket.OPEN) {
             this.ws.send(JSON.stringify(message));
@@ -339,3 +444,4 @@ class DashboardWebSocket {
         }
     }
 }
+
