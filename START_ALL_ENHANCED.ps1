@@ -57,13 +57,24 @@ if (Test-Path $botApiScript) {
 Start-Sleep -Seconds 3
 
 # Start Daphne
-Write-Host "[3/3] Starting Daphne (Port 8001)..." -ForegroundColor Yellow
+Write-Host "[3/4] Starting Daphne (Port 8001)..." -ForegroundColor Yellow
 $daphneScript = Join-Path $PSScriptRoot "start_daphne.ps1"
 if (Test-Path $daphneScript) {
     Start-Process powershell -ArgumentList "-NoExit", "-File", $daphneScript
     Write-Host "      [OK] Daphne terminal opened" -ForegroundColor Green
 } else {
     Write-Host "      [ERROR] Daphne script not found: $daphneScript" -ForegroundColor Red
+}
+Start-Sleep -Seconds 3
+
+# Start AI Bot
+Write-Host "[4/4] Starting AI Bot..." -ForegroundColor Yellow
+$aiBotScript = Join-Path $PSScriptRoot "start_ai_bot.ps1"
+if (Test-Path $aiBotScript) {
+    Start-Process powershell -ArgumentList "-NoExit", "-File", $aiBotScript
+    Write-Host "      [OK] AI Bot terminal opened" -ForegroundColor Green
+} else {
+    Write-Host "      [WARNING] AI Bot script not found (optional): $aiBotScript" -ForegroundColor Yellow
 }
 
 Write-Host ""
@@ -101,6 +112,26 @@ if ($allRunning) {
     Write-Host ""
     Write-Host "   Dashboard: http://localhost:8001" -ForegroundColor Cyan
     Write-Host "   Bot API:   http://localhost:8002" -ForegroundColor Cyan
+    Write-Host "   AI Bot:    Check terminal for status" -ForegroundColor Cyan
+    Write-Host ""
+    
+    # Open browsers automatically
+    Write-Host "   Opening browsers..." -ForegroundColor Yellow
+    Start-Sleep -Seconds 2
+    
+    # Open Crypto Bot Dashboard
+    Start-Process "http://localhost:8001"
+    Write-Host "   [OK] Crypto Bot Dashboard opened" -ForegroundColor Green
+    
+    # Check if AI bot is running and open its UI
+    $aiBotRunning = Get-Process -Name "python" -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "*ai*" }
+    if ($aiBotRunning -or (Test-Path "c:\dev-projects\ai\start_with_restart.bat")) {
+        Start-Sleep -Seconds 1
+        # Assuming AI bot runs on a different port - adjust if needed
+        Start-Process "http://localhost:7860"  # Common port for Gradio/Streamlit AI apps
+        Write-Host "   [OK] AI Bot UI opened" -ForegroundColor Green
+    }
+    
     Write-Host ""
     Write-Host "   Press Ctrl+C in each terminal window to stop services" -ForegroundColor Yellow
 } else {

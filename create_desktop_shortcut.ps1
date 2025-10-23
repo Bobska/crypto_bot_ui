@@ -28,8 +28,9 @@ Write-Host "Double-click 'Start Crypto Bot' on your desktop to:" -ForegroundColo
 Write-Host "  1. Start Redis Server" -ForegroundColor White
 Write-Host "  2. Start Bot API (Port 8002)" -ForegroundColor White
 Write-Host "  3. Start Daphne Dashboard (Port 8001)" -ForegroundColor White
-Write-Host "  4. Verify all services are running" -ForegroundColor White
-Write-Host "  5. Show dashboard URL" -ForegroundColor White
+Write-Host "  4. Start AI Bot" -ForegroundColor White
+Write-Host "  5. Verify all services are running" -ForegroundColor White
+Write-Host "  6. Auto-open Crypto Dashboard & AI Bot UI in browser" -ForegroundColor White
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host ""
