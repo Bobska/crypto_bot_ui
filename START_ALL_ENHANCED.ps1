@@ -34,8 +34,15 @@ Write-Host ""
 Write-Host "Starting services in separate terminals..." -ForegroundColor Cyan
 Write-Host ""
 
+# STARTUP ORDER:
+# 1. Redis (dependency for Daphne's channels)
+# 2. Bot API (independent service)
+# 3. AI Bot (independent service)  
+# 4. Daphne (depends on Redis)
+
 # Start Redis
-Write-Host "[1/3] Starting Redis Server..." -ForegroundColor Yellow
+Write-Host "[1/4] Starting Redis Server..." -ForegroundColor Yellow
+Write-Host "      Redis must start first (required by Daphne)" -ForegroundColor Gray
 $redisScript = Join-Path $PSScriptRoot "start_redis_direct.ps1"
 if (Test-Path $redisScript) {
     Start-Process powershell -ArgumentList "-NoExit", "-File", $redisScript
@@ -43,10 +50,11 @@ if (Test-Path $redisScript) {
 } else {
     Write-Host "      [ERROR] Redis script not found: $redisScript" -ForegroundColor Red
 }
-Start-Sleep -Seconds 3
+Write-Host "      Waiting for Redis to initialize..." -ForegroundColor Gray
+Start-Sleep -Seconds 4
 
 # Start Bot API
-Write-Host "[2/3] Starting Bot API (Port 8002)..." -ForegroundColor Yellow
+Write-Host "[2/4] Starting Bot API (Port 8002)..." -ForegroundColor Yellow
 $botApiScript = "c:\dev-projects\crypto-trading-bot\start_bot_api.ps1"
 if (Test-Path $botApiScript) {
     Start-Process powershell -ArgumentList "-NoExit", "-File", $botApiScript
@@ -54,10 +62,22 @@ if (Test-Path $botApiScript) {
 } else {
     Write-Host "      [ERROR] Bot API script not found: $botApiScript" -ForegroundColor Red
 }
-Start-Sleep -Seconds 3
+Start-Sleep -Seconds 2
 
-# Start Daphne
-Write-Host "[3/4] Starting Daphne (Port 8001)..." -ForegroundColor Yellow
+# Start AI Bot
+Write-Host "[3/4] Starting AI Bot..." -ForegroundColor Yellow
+$aiBotScript = Join-Path $PSScriptRoot "start_ai_bot.ps1"
+if (Test-Path $aiBotScript) {
+    Start-Process powershell -ArgumentList "-NoExit", "-File", $aiBotScript
+    Write-Host "      [OK] AI Bot terminal opened" -ForegroundColor Green
+} else {
+    Write-Host "      [WARNING] AI Bot script not found (optional): $aiBotScript" -ForegroundColor Yellow
+}
+Start-Sleep -Seconds 2
+
+# Start Daphne (depends on Redis being ready)
+Write-Host "[4/4] Starting Daphne (Port 8001)..." -ForegroundColor Yellow
+Write-Host "      Daphne requires Redis for WebSocket channels" -ForegroundColor Gray
 $daphneScript = Join-Path $PSScriptRoot "start_daphne.ps1"
 if (Test-Path $daphneScript) {
     Start-Process powershell -ArgumentList "-NoExit", "-File", $daphneScript
@@ -67,19 +87,10 @@ if (Test-Path $daphneScript) {
 }
 Start-Sleep -Seconds 3
 
-# Start AI Bot
-Write-Host "[4/4] Starting AI Bot..." -ForegroundColor Yellow
-$aiBotScript = Join-Path $PSScriptRoot "start_ai_bot.ps1"
-if (Test-Path $aiBotScript) {
-    Start-Process powershell -ArgumentList "-NoExit", "-File", $aiBotScript
-    Write-Host "      [OK] AI Bot terminal opened" -ForegroundColor Green
-} else {
-    Write-Host "      [WARNING] AI Bot script not found (optional): $aiBotScript" -ForegroundColor Yellow
-}
-
 Write-Host ""
-Write-Host "Waiting for services to initialize..." -ForegroundColor Yellow
-Start-Sleep -Seconds 8
+Write-Host "Waiting for all services to fully initialize..." -ForegroundColor Yellow
+Write-Host "(Redis, Bot API, AI Bot, Daphne)" -ForegroundColor Gray
+Start-Sleep -Seconds 10
 
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Cyan

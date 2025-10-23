@@ -5,7 +5,7 @@ Write-Host "============================================================" -Foreg
 
 $env:DJANGO_SETTINGS_MODULE = $null
 
-$aiBotPath = "c:\dev-projects\ai"
+$aiBotPath = "c:\dev-projects\ai\ai-server"
 $startScript = Join-Path $aiBotPath "start_with_restart.bat"
 
 if (Test-Path $startScript) {
