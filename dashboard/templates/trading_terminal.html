@@ -657,45 +657,24 @@ const portfolioChart = new Chart(portfolioCtx, {
     }
 });
 
-// Initialize TradingView Lightweight Chart
-const chartContainer = document.getElementById('tradingChart');
-const chart = LightweightCharts.createChart(chartContainer, {
-    width: chartContainer.clientWidth,
-    height: 500,
-    layout: {
-        background: { color: '#0f172a' },
-        textColor: '#d1d5db',
-    },
-    grid: {
-        vertLines: { color: '#1e293b' },
-        horzLines: { color: '#1e293b' },
-    },
-    timeScale: {
-        borderColor: '#374151',
+// Initialize TradingChart with our custom class
+let tradingChart = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize trading chart
+    tradingChart = new TradingChart('tradingChart');
+    
+    // Load initial historical data
+    tradingChart.loadHistoricalData('BTC/USDT', '1D');
+    
+    // Add sample grid lines (will be replaced with real bot strategy levels)
+    tradingChart.addGridLines(44000, 46000);
+    
+    // Subscribe to WebSocket if available
+    if (typeof websocket !== 'undefined' && websocket) {
+        tradingChart.subscribeToWebSocket(websocket);
+        console.log('Trading chart subscribed to WebSocket');
     }
-});
-
-const candlestickSeries = chart.addCandlestickSeries({
-    upColor: '#22c55e',
-    downColor: '#ef4444',
-    borderVisible: false,
-    wickUpColor: '#22c55e',
-    wickDownColor: '#ef4444',
-});
-
-// Sample data - will be replaced with real WebSocket data
-const sampleData = [
-    { time: '2024-01-01', open: 44000, high: 44500, low: 43800, close: 44200 },
-    { time: '2024-01-02', open: 44200, high: 45000, low: 44100, close: 44800 },
-    { time: '2024-01-03', open: 44800, high: 45500, low: 44700, close: 45200 },
-    { time: '2024-01-04', open: 45200, high: 45800, low: 45000, close: 45500 },
-    { time: '2024-01-05', open: 45500, high: 46000, low: 45200, close: 45800 },
-];
-candlestickSeries.setData(sampleData);
-
-// Resize chart on window resize
-window.addEventListener('resize', () => {
-    chart.applyOptions({ width: chartContainer.clientWidth });
 });
 
 // Trading Functions
@@ -766,7 +745,12 @@ function setTimeframe(timeframe) {
     });
     // Add active class to clicked button
     event.target.classList.add('active');
-    console.log('Timeframe changed to:', timeframe);
+    
+    // Update chart with new timeframe
+    if (tradingChart) {
+        tradingChart.setTimeframe(timeframe);
+        console.log('Timeframe changed to:', timeframe);
+    }
 }
 
 function askAI() {
@@ -814,4 +798,9 @@ function updateTimestamp() {
 setInterval(updateTimestamp, 1000);
 updateTimestamp();
 </script>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Trading Chart Library -->
+<script src="{% static 'js/trading-chart.js' %}"></script>
 {% endblock %}
