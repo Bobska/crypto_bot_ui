@@ -1,0 +1,396 @@
+{% extends 'base.html' %}
+{% block title %}Logs - Trading Bot{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">📝 Bot Logs</h1>
+    </div>
+</div>
+
+<!-- Log Controls -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h5 class="mb-0">Log Viewer</h5>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <div class="btn-group" role="group">
+                            <button id="refresh-logs" class="btn btn-outline-primary">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                            <button id="auto-refresh-toggle" class="btn btn-outline-secondary" data-auto="false">
+                                <i class="fas fa-pause"></i> Auto Refresh: OFF
+                            </button>
+                            <button id="clear-display" class="btn btn-outline-warning">
+                                <i class="fas fa-eraser"></i> Clear Display
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Log Filters -->
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label for="log-level-filter" class="form-label">Log Level:</label>
+                        <select id="log-level-filter" class="form-select">
+                            <option value="">All Levels</option>
+                            <option value="DEBUG">Debug</option>
+                            <option value="INFO">Info</option>
+                            <option value="WARNING">Warning</option>
+                            <option value="ERROR">Error</option>
+                            <option value="CRITICAL">Critical</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="log-lines" class="form-label">Lines to Show:</label>
+                        <select id="log-lines" class="form-select">
+                            <option value="50">Last 50 lines</option>
+                            <option value="100" selected>Last 100 lines</option>
+                            <option value="200">Last 200 lines</option>
+                            <option value="500">Last 500 lines</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="search-filter" class="form-label">Search:</label>
+                        <input type="text" id="search-filter" class="form-control" placeholder="Filter logs...">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">&nbsp;</label>
+                        <div>
+                            <button id="apply-filters" class="btn btn-primary w-100">
+                                <i class="fas fa-filter"></i> Apply Filters
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Log Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <div class="fs-4 fw-bold" id="total-lines">-</div>
+                <div>Total Lines</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <div class="fs-4 fw-bold" id="info-count">-</div>
+                <div>Info Messages</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body text-center">
+                <div class="fs-4 fw-bold" id="warning-count">-</div>
+                <div>Warnings</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body text-center">
+                <div class="fs-4 fw-bold" id="error-count">-</div>
+                <div>Errors</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Log Display -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h6 class="mb-0">Log Entries</h6>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <small class="text-muted">
+                            Last updated: <span id="last-update-time">Never</span>
+                        </small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div id="log-container" style="height: 500px; overflow-y: auto; background-color: #0d1117; padding: 15px;">
+                    <div id="log-content">
+                        <div class="text-center text-muted">
+                            <i class="fas fa-spinner fa-spin"></i> Loading logs...
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle"></i>
+                            Logs are automatically filtered and formatted for readability.
+                        </small>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <div class="form-check form-switch d-inline-block">
+                            <input class="form-check-input" type="checkbox" id="scroll-to-bottom" checked>
+                            <label class="form-check-label" for="scroll-to-bottom">
+                                Auto-scroll to bottom
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Log Entry Template (hidden) -->
+<template id="log-entry-template">
+    <div class="log-entry mb-2 p-2 rounded" data-level="">
+        <div class="row">
+            <div class="col-auto">
+                <span class="log-time badge bg-secondary"></span>
+            </div>
+            <div class="col-auto">
+                <span class="log-level badge"></span>
+            </div>
+            <div class="col">
+                <span class="log-message font-monospace"></span>
+            </div>
+        </div>
+    </div>
+</template>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .log-entry {
+        border-left: 3px solid #495057;
+        font-size: 0.9rem;
+        color: #eee !important;
+    }
+    
+    .log-entry[data-level="DEBUG"] {
+        border-left-color: #6c757d;
+        background-color: rgba(108, 117, 125, 0.1);
+        color: #eee !important;
+    }
+    
+    .log-entry[data-level="INFO"] {
+        border-left-color: #0dcaf0;
+        background-color: rgba(13, 202, 240, 0.1);
+        color: #eee !important;
+    }
+    
+    .log-entry[data-level="WARNING"] {
+        border-left-color: #ffc107;
+        background-color: rgba(255, 193, 7, 0.1);
+        color: #eee !important;
+    }
+    
+    .log-entry[data-level="ERROR"] {
+        border-left-color: #dc3545;
+        background-color: rgba(220, 53, 69, 0.1);
+        color: #eee !important;
+    }
+    
+    .log-entry[data-level="CRITICAL"] {
+        border-left-color: #dc3545;
+        background-color: rgba(220, 53, 69, 0.2);
+        font-weight: bold;
+        color: #fff !important;
+    }
+    
+    .log-level.badge {
+        min-width: 70px;
+        color: #fff !important;
+    }
+    
+    .log-time.badge {
+        min-width: 100px;
+        font-family: monospace;
+        color: #fff !important;
+    }
+    
+    #log-container {
+        font-family: 'Courier New', monospace;
+        font-size: 0.85rem;
+        line-height: 1.4;
+        background-color: #0d1117 !important;
+        color: #eee !important;
+    }
+    
+    .log-message {
+        word-break: break-word;
+        color: #eee !important;
+    }
+    
+    /* Ensure log container text is visible */
+    #log-content {
+        color: #eee !important;
+    }
+    
+    #log-content .text-center {
+        color: #eee !important;
+    }
+    
+    #log-content .text-muted {
+        color: #adb5bd !important;
+    }
+    
+    /* Fix warning card text */
+    .bg-warning .card-body {
+        color: #000 !important;
+    }
+    
+    .bg-warning .fs-4, .bg-warning div {
+        color: #000 !important;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let autoRefreshInterval = null;
+    let isAutoRefreshEnabled = false;
+    
+    // Log level colors for badges
+    const logLevelColors = {
+        'DEBUG': 'secondary',
+        'INFO': 'info',
+        'WARNING': 'warning',
+        'ERROR': 'danger',
+        'CRITICAL': 'danger'
+    };
+    
+    // Fetch and display logs
+    function fetchLogs() {
+        const lines = document.getElementById('log-lines').value;
+        const level = document.getElementById('log-level-filter').value;
+        const search = document.getElementById('search-filter').value;
+        
+        // Show loading state
+        document.getElementById('log-content').innerHTML = 
+            '<div class="text-center text-muted"><i class="fas fa-spinner fa-spin"></i> Loading logs...</div>';
+        
+        // Build query parameters
+        const params = new URLSearchParams();
+        if (lines) params.append('lines', lines);
+        if (level) params.append('level', level);
+        if (search) params.append('search', search);
+        
+        fetch(`/api/logs?${params.toString()}`)
+            .then(response => response.json())
+            .then(data => {
+                displayLogs(data.logs);
+                updateLogStats(data.stats);
+                document.getElementById('last-update-time').textContent = new Date().toLocaleTimeString();
+            })
+            .catch(error => {
+                console.error('Error fetching logs:', error);
+                document.getElementById('log-content').innerHTML = 
+                    '<div class="text-center text-danger"><i class="fas fa-exclamation-triangle"></i> Error loading logs</div>';
+            });
+    }
+    
+    // Display logs in the container
+    function displayLogs(logs) {
+        const container = document.getElementById('log-content');
+        const template = document.getElementById('log-entry-template');
+        
+        if (!logs || logs.length === 0) {
+            container.innerHTML = '<div class="text-center text-muted">No logs found matching the current filters.</div>';
+            return;
+        }
+        
+        container.innerHTML = '';
+        
+        logs.forEach(log => {
+            const entry = template.content.cloneNode(true);
+            const logEntry = entry.querySelector('.log-entry');
+            
+            logEntry.setAttribute('data-level', log.level);
+            entry.querySelector('.log-time').textContent = log.time;
+            entry.querySelector('.log-level').textContent = log.level;
+            entry.querySelector('.log-level').className = `log-level badge bg-${logLevelColors[log.level] || 'secondary'}`;
+            entry.querySelector('.log-message').textContent = log.message;
+            
+            container.appendChild(entry);
+        });
+        
+        // Auto-scroll to bottom if enabled
+        if (document.getElementById('scroll-to-bottom').checked) {
+            const logContainer = document.getElementById('log-container');
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+    }
+    
+    // Update log statistics
+    function updateLogStats(stats) {
+        document.getElementById('total-lines').textContent = stats.total || 0;
+        document.getElementById('info-count').textContent = stats.info || 0;
+        document.getElementById('warning-count').textContent = stats.warning || 0;
+        document.getElementById('error-count').textContent = stats.error || 0;
+    }
+    
+    // Toggle auto-refresh
+    function toggleAutoRefresh() {
+        const button = document.getElementById('auto-refresh-toggle');
+        
+        if (isAutoRefreshEnabled) {
+            clearInterval(autoRefreshInterval);
+            autoRefreshInterval = null;
+            isAutoRefreshEnabled = false;
+            button.innerHTML = '<i class="fas fa-play"></i> Auto Refresh: OFF';
+            button.className = 'btn btn-outline-secondary';
+        } else {
+            autoRefreshInterval = setInterval(fetchLogs, 10000); // Refresh every 10 seconds
+            isAutoRefreshEnabled = true;
+            button.innerHTML = '<i class="fas fa-pause"></i> Auto Refresh: ON';
+            button.className = 'btn btn-outline-success';
+        }
+    }
+    
+    // Clear display
+    function clearDisplay() {
+        document.getElementById('log-content').innerHTML = 
+            '<div class="text-center text-muted">Display cleared. Click refresh to reload logs.</div>';
+        updateLogStats({});
+    }
+    
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initial load
+        fetchLogs();
+        
+        // Button events
+        document.getElementById('refresh-logs').addEventListener('click', fetchLogs);
+        document.getElementById('apply-filters').addEventListener('click', fetchLogs);
+        document.getElementById('auto-refresh-toggle').addEventListener('click', toggleAutoRefresh);
+        document.getElementById('clear-display').addEventListener('click', clearDisplay);
+        
+        // Enter key in search box
+        document.getElementById('search-filter').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                fetchLogs();
+            }
+        });
+        
+        // Auto-apply filters when dropdowns change
+        document.getElementById('log-level-filter').addEventListener('change', fetchLogs);
+        document.getElementById('log-lines').addEventListener('change', fetchLogs);
+    });
+</script>
+{% endblock %}

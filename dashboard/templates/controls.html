@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+{% block title %}Bot Controls - Trading Bot{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">🎮 Bot Controls</h1>
+    </div>
+</div>
+
+<!-- Current Status Card -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Current Bot Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h4>
+                            Status: 
+                            <span id="bot-status" class="status-stopped">🔴 Checking...</span>
+                        </h4>
+                        <p class="text-muted mb-0">Last updated: <span id="last-updated">Loading...</span></p>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <button id="refresh-status" class="btn btn-outline-primary">
+                            <i class="fas fa-sync-alt"></i> Refresh Status
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Control Buttons -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Start Trading Bot</h5>
+            </div>
+            <div class="card-body">
+                <p>Start the automated trading bot with current settings.</p>
+                <form method="POST" onsubmit="return confirmStart()">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="start">
+                    <button type="submit" class="btn btn-success btn-lg" id="start-btn">
+                        <i class="fas fa-play"></i> Start Bot
+                    </button>
+                </form>
+                
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i>
+                        The bot will begin trading automatically based on your configured settings.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Stop Trading Bot</h5>
+            </div>
+            <div class="card-body">
+                <p>Stop the trading bot immediately.</p>
+                <form method="POST" onsubmit="return confirmStop()">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="stop">
+                    <button type="submit" class="btn btn-danger btn-lg" id="stop-btn">
+                        <i class="fas fa-stop"></i> Stop Bot
+                    </button>
+                </form>
+                
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        This will stop all trading activity immediately.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Links -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Quick Links</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <a href="{% url 'dashboard' %}" class="btn btn-outline-primary w-100 mb-2">
+                            <i class="fas fa-tachometer-alt"></i><br>
+                            Dashboard
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'settings' %}" class="btn btn-outline-secondary w-100 mb-2">
+                            <i class="fas fa-cog"></i><br>
+                            Settings
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'trades' %}" class="btn btn-outline-info w-100 mb-2">
+                            <i class="fas fa-chart-line"></i><br>
+                            Trade History
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'logs' %}" class="btn btn-outline-warning w-100 mb-2">
+                            <i class="fas fa-file-alt"></i><br>
+                            View Logs
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Safety Information -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-shield-alt"></i> Safety Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Before Starting the Bot:</h6>
+                        <ul>
+                            <li>Verify your trading settings are correct</li>
+                            <li>Ensure you're using testnet for practice</li>
+                            <li>Check your account balance and risk tolerance</li>
+                            <li>Review stop-loss and risk management settings</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>While Bot is Running:</h6>
+                        <ul>
+                            <li>Monitor the dashboard regularly</li>
+                            <li>Watch for any error messages in logs</li>
+                            <li>Be prepared to stop the bot if needed</li>
+                            <li>Don't change settings while bot is active</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="alert alert-danger mt-3">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Warning:</strong> Automated trading involves significant risk. Only trade with money you can afford to lose.
+                    Always test thoroughly in testnet mode before using real funds.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Check bot status on page load
+    function checkBotStatus() {
+        fetch('/api/status')
+            .then(response => response.json())
+            .then(data => {
+                const statusElement = document.getElementById('bot-status');
+                const lastUpdatedElement = document.getElementById('last-updated');
+                const startBtn = document.getElementById('start-btn');
+                const stopBtn = document.getElementById('stop-btn');
+                
+                if (data.bot_running) {
+                    statusElement.innerHTML = '🟢 Running';
+                    statusElement.className = 'status-running';
+                    startBtn.disabled = true;
+                    stopBtn.disabled = false;
+                } else {
+                    statusElement.innerHTML = '🔴 Stopped';
+                    statusElement.className = 'status-stopped';
+                    startBtn.disabled = false;
+                    stopBtn.disabled = true;
+                }
+                
+                lastUpdatedElement.textContent = new Date(data.last_updated).toLocaleString();
+            })
+            .catch(error => {
+                console.error('Error checking bot status:', error);
+                document.getElementById('bot-status').innerHTML = '❌ Error';
+            });
+    }
+    
+    // Refresh status button
+    document.getElementById('refresh-status').addEventListener('click', checkBotStatus);
+    
+    // Confirmation dialogs
+    function confirmStart() {
+        return confirm('Are you sure you want to start the trading bot? Make sure your settings are correct.');
+    }
+    
+    function confirmStop() {
+        return confirm('Are you sure you want to stop the trading bot? This will halt all trading activity.');
+    }
+    
+    // Auto-refresh status every 30 seconds
+    function autoRefreshStatus() {
+        setInterval(checkBotStatus, 30000);
+    }
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        checkBotStatus();
+        autoRefreshStatus();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,385 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Trading Bot{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <style>
+        body {
+            background-color: #1a1a2e;
+            color: #eee !important;
+            padding-top: 76px;
+        }
+        
+        /* Text Colors */
+        h1, h2, h3, h4, h5, h6 {
+            color: #fff !important;
+        }
+        
+        p, span, div, label, small {
+            color: #eee !important;
+        }
+        
+        .text-muted {
+            color: #adb5bd !important;
+        }
+        
+        .text-dark {
+            color: #eee !important;
+        }
+        
+        /* Navigation */
+        .navbar-dark {
+            background-color: #16213e !important;
+        }
+        
+        .navbar-dark .navbar-nav .nav-link {
+            color: #eee !important;
+        }
+        
+        .navbar-dark .navbar-brand {
+            color: #fff !important;
+        }
+        
+        /* Cards */
+        .card {
+            background-color: #16213e;
+            border: 1px solid #0f3460;
+            color: #eee !important;
+        }
+        
+        .card-header {
+            background-color: #0f3460;
+            border-bottom: 1px solid #533483;
+            color: #fff !important;
+        }
+        
+        .card-body {
+            color: #eee !important;
+        }
+        
+        .card-footer {
+            background-color: #0f3460;
+            border-top: 1px solid #533483;
+            color: #eee !important;
+        }
+        
+        /* Tables */
+        .table {
+            color: #eee !important;
+        }
+        
+        .table-dark {
+            background-color: #16213e;
+            color: #eee !important;
+        }
+        
+        .table-dark th {
+            color: #fff !important;
+            border-color: #533483;
+        }
+        
+        .table-dark td {
+            color: #eee !important;
+            border-color: #0f3460;
+        }
+        
+        /* Forms */
+        .form-control {
+            background-color: #0f3460;
+            border: 1px solid #533483;
+            color: #eee !important;
+        }
+        
+        .form-control:focus {
+            background-color: #0f3460;
+            border-color: #533483;
+            color: #eee !important;
+            box-shadow: 0 0 0 0.2rem rgba(83, 52, 131, 0.25);
+        }
+        
+        .form-select {
+            background-color: #0f3460;
+            border: 1px solid #533483;
+            color: #eee !important;
+        }
+        
+        .form-select:focus {
+            background-color: #0f3460;
+            border-color: #533483;
+            color: #eee !important;
+        }
+        
+        .form-label {
+            color: #eee !important;
+        }
+        
+        .form-check-label {
+            color: #eee !important;
+        }
+        
+        /* Buttons */
+        .btn-primary {
+            background-color: #533483;
+            border-color: #533483;
+            color: #fff !important;
+        }
+        
+        .btn-primary:hover {
+            background-color: #6c4a8a;
+            border-color: #6c4a8a;
+        }
+        
+        .btn-success {
+            background-color: #28a745;
+            color: #fff !important;
+        }
+        
+        .btn-danger {
+            background-color: #dc3545;
+            color: #fff !important;
+        }
+        
+        .btn-outline-primary {
+            border-color: #533483;
+            color: #533483 !important;
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: #533483;
+            color: #fff !important;
+        }
+        
+        .btn-outline-secondary {
+            border-color: #6c757d;
+            color: #6c757d !important;
+        }
+        
+        .btn-outline-secondary:hover {
+            background-color: #6c757d;
+            color: #fff !important;
+        }
+        
+        .btn-outline-info {
+            border-color: #17a2b8;
+            color: #17a2b8 !important;
+        }
+        
+        .btn-outline-info:hover {
+            background-color: #17a2b8;
+            color: #fff !important;
+        }
+        
+        .btn-outline-warning {
+            border-color: #ffc107;
+            color: #ffc107 !important;
+        }
+        
+        .btn-outline-warning:hover {
+            background-color: #ffc107;
+            color: #000 !important;
+        }
+        
+        /* Status colors */
+        .status-running {
+            color: #28a745 !important;
+        }
+        
+        .status-stopped {
+            color: #dc3545 !important;
+        }
+        
+        .profit {
+            color: #28a745 !important;
+        }
+        
+        .loss {
+            color: #dc3545 !important;
+        }
+        
+        /* Badges */
+        .badge {
+            color: #fff !important;
+        }
+        
+        /* Alerts */
+        .alert {
+            color: #fff !important;
+        }
+        
+        .alert-danger {
+            background-color: #721c24;
+            border-color: #b02a37;
+            color: #fff !important;
+        }
+        
+        .alert-warning {
+            background-color: #664d03;
+            border-color: #ffda6a;
+            color: #fff !important;
+        }
+        
+        .alert-info {
+            background-color: #055160;
+            border-color: #9eeaf9;
+            color: #fff !important;
+        }
+        
+        .alert-success {
+            background-color: #0a3622;
+            border-color: #75b798;
+            color: #fff !important;
+        }
+        
+        /* Additional Bootstrap overrides */
+        .list-group-item {
+            background-color: #16213e;
+            color: #eee !important;
+            border-color: #0f3460;
+        }
+        
+        .dropdown-menu {
+            background-color: #16213e;
+            border-color: #0f3460;
+        }
+        
+        .dropdown-item {
+            color: #eee !important;
+        }
+        
+        .dropdown-item:hover {
+            background-color: #533483;
+            color: #fff !important;
+        }
+        
+        /* Ensure all text inputs are visible */
+        input, textarea, select {
+            color: #eee !important;
+        }
+        
+        /* Fix any remaining dark text */
+        * {
+            color: inherit;
+        }
+        
+        /* Override Bootstrap text utilities */
+        .text-dark {
+            color: #eee !important;
+        }
+        
+        .text-secondary {
+            color: #adb5bd !important;
+        }
+        
+        /* Progress bars */
+        .progress {
+            background-color: #0f3460;
+        }
+        
+        /* Modals */
+        .modal-content {
+            background-color: #16213e;
+            color: #eee !important;
+        }
+        
+        .modal-header {
+            border-bottom-color: #0f3460;
+        }
+        
+        .modal-footer {
+            border-top-color: #0f3460;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'dashboard' %}">
+                <i class="fas fa-robot"></i> Trading Bot
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" 
+                           href="{% url 'dashboard' %}">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'trades' %}active{% endif %}" 
+                           href="{% url 'trades' %}">
+                            <i class="fas fa-chart-line"></i> Trade History
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'settings' %}active{% endif %}" 
+                           href="{% url 'settings' %}">
+                            <i class="fas fa-cog"></i> Settings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'controls' %}active{% endif %}" 
+                           href="{% url 'controls' %}">
+                            <i class="fas fa-play-circle"></i> Controls
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'logs' %}active{% endif %}" 
+                           href="{% url 'logs' %}">
+                            <i class="fas fa-file-alt"></i> Logs
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container my-4">
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Page Content -->
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-center py-3 mt-5">
+        <div class="container">
+            <p>&copy; 2025 Crypto Trading Bot. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

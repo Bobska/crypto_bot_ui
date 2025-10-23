@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% block title %}Trade History - Trading Bot{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">📈 Trade History</h1>
+    </div>
+</div>
+
+<!-- Filters Card -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Filters</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="from_date" class="form-label">From Date:</label>
+                        <input type="date" class="form-control" id="from_date" name="from_date" 
+                               value="{{ filters.from_date }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="to_date" class="form-label">To Date:</label>
+                        <input type="date" class="form-control" id="to_date" name="to_date" 
+                               value="{{ filters.to_date }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="action" class="form-label">Action:</label>
+                        <select class="form-select" id="action" name="action">
+                            <option value="">All</option>
+                            <option value="BUY" {% if filters.action == 'BUY' %}selected{% endif %}>Buy</option>
+                            <option value="SELL" {% if filters.action == 'SELL' %}selected{% endif %}>Sell</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="result" class="form-label">Result:</label>
+                        <select class="form-select" id="result" name="result">
+                            <option value="">All</option>
+                            <option value="WIN" {% if filters.result == 'WIN' %}selected{% endif %}>Win</option>
+                            <option value="LOSS" {% if filters.result == 'LOSS' %}selected{% endif %}>Loss</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Apply Filters</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Card -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5>Summary: {{ total_trades }} trade{{ total_trades|pluralize }} found</h5>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Trades Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Trade Details</h5>
+            </div>
+            <div class="card-body">
+                {% if trades %}
+                    <div class="table-responsive">
+                        <table class="table table-dark table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Action</th>
+                                    <th>Symbol</th>
+                                    <th>Price</th>
+                                    <th>Amount</th>
+                                    <th>Profit/Loss %</th>
+                                    <th>Result</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for trade in trades %}
+                                <tr>
+                                    <td>{{ trade.timestamp|date:"M d, Y H:i:s" }}</td>
+                                    <td>
+                                        <span class="badge {% if trade.action == 'BUY' %}bg-success{% else %}bg-danger{% endif %}">
+                                            {{ trade.action }}
+                                        </span>
+                                    </td>
+                                    <td>{{ trade.symbol }}</td>
+                                    <td>${{ trade.price|floatformat:2 }}</td>
+                                    <td>{{ trade.amount|floatformat:6 }}</td>
+                                    <td>
+                                        {% if trade.profit_loss_pct %}
+                                            <span class="{% if trade.profit_loss_pct > 0 %}profit{% else %}loss{% endif %}">
+                                                {{ trade.profit_loss_pct|floatformat:2 }}%
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if trade.result %}
+                                            <span class="badge {% if trade.result == 'WIN' %}bg-success{% else %}bg-danger{% endif %}">
+                                                {{ trade.result }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                        <h4 class="text-muted">No trades found</h4>
+                        <p class="text-muted">Try adjusting your filters or wait for the bot to make some trades.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Back to Dashboard -->
+<div class="row mt-4">
+    <div class="col-12">
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

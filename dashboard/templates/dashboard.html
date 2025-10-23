@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard - Trading Bot{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">🤖 Trading Bot Dashboard</h1>
+    </div>
+</div>
+
+<!-- Bot Status Card -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Bot Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Status:</strong>
+                        {% if bot_status.bot_running %}
+                            <span class="status-running">🟢 Running</span>
+                        {% else %}
+                            <span class="status-stopped">🔴 Stopped</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Symbol:</strong> {{ bot_status.symbol|default:"BTC/USDT" }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Current Price:</strong> ${{ bot_status.current_price|floatformat:2|default:"---" }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Position:</strong> {{ bot_status.position|default:"---" }}
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-6">
+                        <strong>Profile:</strong> {{ bot_status.profile|default:"---" }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Last Updated:</strong> {{ bot_status.last_updated|default:"---" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Balance Cards -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">💰 USDT Balance</h6>
+            </div>
+            <div class="card-body text-center">
+                <h3>${{ bot_status.balance.USDT|floatformat:2|default:"0.00" }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">₿ BTC Balance</h6>
+            </div>
+            <div class="card-body text-center">
+                <h3>{{ bot_status.balance.BTC|floatformat:6|default:"0.000000" }} BTC</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">💎 Total Value</h6>
+            </div>
+            <div class="card-body text-center">
+                <h3 id="total-value">Calculating...</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">📊 Total Trades</h6>
+            </div>
+            <div class="card-body text-center">
+                <h3>{{ stats.total_trades|default:"0" }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">🎯 Win Rate</h6>
+            </div>
+            <div class="card-body text-center">
+                <h3 class="{% if stats.win_rate >= 50 %}profit{% else %}loss{% endif %}">
+                    {{ stats.win_rate|floatformat:1|default:"0.0" }}%
+                </h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">🏆 Wins / Losses</h6>
+            </div>
+            <div class="card-body text-center">
+                <h3>
+                    <span class="profit">{{ stats.wins|default:"0" }}</span> / 
+                    <span class="loss">{{ stats.losses|default:"0" }}</span>
+                </h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Trades -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent Trades</h5>
+                <a href="{% url 'trades' %}" class="btn btn-sm btn-primary">View All Trades</a>
+            </div>
+            <div class="card-body">
+                {% if recent_trades %}
+                    <div class="table-responsive">
+                        <table class="table table-dark table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Action</th>
+                                    <th>Price</th>
+                                    <th>Result</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for trade in recent_trades %}
+                                <tr>
+                                    <td>{{ trade.timestamp }}</td>
+                                    <td>
+                                        <span class="badge {% if trade.action == 'BUY' %}bg-success{% else %}bg-danger{% endif %}">
+                                            {{ trade.action }}
+                                        </span>
+                                    </td>
+                                    <td>${{ trade.price|floatformat:2 }}</td>
+                                    <td>
+                                        {% if trade.result %}
+                                            <span class="{% if '+' in trade.result %}profit{% else %}loss{% endif %}">
+                                                {{ trade.result }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No recent trades available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <a href="{% url 'controls' %}" class="btn btn-primary me-3">
+                    <i class="fas fa-play-circle"></i> Bot Controls
+                </a>
+                <a href="{% url 'settings' %}" class="btn btn-secondary me-3">
+                    <i class="fas fa-cog"></i> Change Settings
+                </a>
+                <a href="{% url 'logs' %}" class="btn btn-info">
+                    <i class="fas fa-file-alt"></i> View Logs
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Calculate total value
+    function calculateTotalValue() {
+        const usdtBalance = {{ bot_status.balance.USDT|default:"0" }};
+        const btcBalance = {{ bot_status.balance.BTC|default:"0" }};
+        const currentPrice = {{ bot_status.current_price|default:"0" }};
+        
+        if (currentPrice > 0) {
+            const totalValue = usdtBalance + (btcBalance * currentPrice);
+            document.getElementById('total-value').textContent = '$' + totalValue.toFixed(2);
+        }
+    }
+    
+    // Auto-refresh every 30 seconds
+    function autoRefresh() {
+        setTimeout(function() {
+            location.reload();
+        }, 30000);
+    }
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        calculateTotalValue();
+        autoRefresh();
+    });
+</script>
+{% endblock %}

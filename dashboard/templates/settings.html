@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% block title %}Settings - Trading Bot{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">⚙️ Bot Settings</h1>
+    </div>
+</div>
+
+<!-- Settings Form -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Trading Configuration</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <!-- Trading Thresholds -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="buy_threshold" class="form-label">Buy Threshold (%):</label>
+                            <input type="number" class="form-control" id="buy_threshold" name="buy_threshold" 
+                                   value="{{ settings.buy_threshold }}" step="0.1" min="0.1" max="10.0" required>
+                            <div class="form-text">Buy when price drops by this percentage</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="sell_threshold" class="form-label">Sell Threshold (%):</label>
+                            <input type="number" class="form-control" id="sell_threshold" name="sell_threshold" 
+                                   value="{{ settings.sell_threshold }}" step="0.1" min="0.1" max="10.0" required>
+                            <div class="form-text">Sell when price rises by this percentage</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Trade Amount -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="trade_amount" class="form-label">Trade Amount (BTC):</label>
+                            <input type="number" class="form-control" id="trade_amount" name="trade_amount" 
+                                   value="{{ settings.trade_amount }}" step="0.0001" min="0.0001" max="1.0" required>
+                            <div class="form-text">Amount of BTC to trade per order</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Stop Loss Settings -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6>Stop Loss Configuration</h6>
+                            <hr>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="stop_loss_enabled" 
+                                       name="stop_loss_enabled" {% if settings.stop_loss_enabled %}checked{% endif %}>
+                                <label class="form-check-label" for="stop_loss_enabled">
+                                    Enable Stop Loss
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="stop_loss_pct" class="form-label">Stop Loss Percentage (%):</label>
+                            <input type="number" class="form-control" id="stop_loss_pct" name="stop_loss_pct" 
+                                   value="{{ settings.stop_loss_pct }}" step="0.1" min="1.0" max="50.0">
+                            <div class="form-text">Stop loss when position drops by this percentage</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Trailing Stop Settings -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6>Trailing Stop Configuration</h6>
+                            <hr>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="trailing_stop_enabled" 
+                                       name="trailing_stop_enabled" {% if settings.trailing_stop_enabled %}checked{% endif %}>
+                                <label class="form-check-label" for="trailing_stop_enabled">
+                                    Enable Trailing Stop
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="trailing_stop_pct" class="form-label">Trailing Stop Percentage (%):</label>
+                            <input type="number" class="form-control" id="trailing_stop_pct" name="trailing_stop_pct" 
+                                   value="{{ settings.trailing_stop_pct }}" step="0.1" min="0.5" max="10.0">
+                            <div class="form-text">Trail the stop loss by this percentage</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Last Updated Info -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Last Updated:</strong> {{ settings.updated_at|date:"M d, Y H:i:s" }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="row">
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary me-3">
+                                <i class="fas fa-save"></i> Save Settings
+                            </button>
+                            <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Settings Help -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Settings Help</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Trading Thresholds</h6>
+                        <ul>
+                            <li><strong>Buy Threshold:</strong> The percentage drop in price that triggers a buy order</li>
+                            <li><strong>Sell Threshold:</strong> The percentage rise in price that triggers a sell order</li>
+                        </ul>
+                        
+                        <h6>Trade Amount</h6>
+                        <ul>
+                            <li>Amount of BTC to buy/sell in each trade</li>
+                            <li>Recommended: 0.001 - 0.01 BTC for testing</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Risk Management</h6>
+                        <ul>
+                            <li><strong>Stop Loss:</strong> Automatically sell if position drops by specified percentage</li>
+                            <li><strong>Trailing Stop:</strong> Dynamic stop loss that follows profitable price movements</li>
+                        </ul>
+                        
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Warning:</strong> These settings affect real trading. Test carefully in testnet mode.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Enable/disable stop loss percentage input based on checkbox
+    document.getElementById('stop_loss_enabled').addEventListener('change', function() {
+        const stopLossInput = document.getElementById('stop_loss_pct');
+        stopLossInput.disabled = !this.checked;
+    });
+    
+    // Enable/disable trailing stop percentage input based on checkbox
+    document.getElementById('trailing_stop_enabled').addEventListener('change', function() {
+        const trailingStopInput = document.getElementById('trailing_stop_pct');
+        trailingStopInput.disabled = !this.checked;
+    });
+    
+    // Initialize disabled state on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('stop_loss_enabled').dispatchEvent(new Event('change'));
+        document.getElementById('trailing_stop_enabled').dispatchEvent(new Event('change'));
+    });
+</script>
+{% endblock %}
