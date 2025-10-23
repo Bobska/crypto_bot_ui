@@ -12,10 +12,10 @@ const NOTIFICATION_TYPES = {
 };
 
 /**
- * Show a toast notification
+ * Show a toast notification with modern styling
  * @param {string} title - Notification title
  * @param {string} message - Notification message
- * @param {string} type - Notification type (success, error, info, warning)
+ * @param {string} type - Notification type (success, error, info, warning, trade)
  * @param {number} duration - Duration in milliseconds (optional)
  */
 function showNotification(title, message, type = 'info', duration = null) {
@@ -31,35 +31,49 @@ function showNotification(title, message, type = 'info', duration = null) {
         document.body.appendChild(container);
     }
     
-    // Create toast element
+    // Create toast element with modern card design
     const toast = document.createElement('div');
-    toast.className = 'toast toast-' + type;
-    toast.style.backgroundColor = notificationType.bgColor;
+    toast.className = `toast toast-${type}`;
+    
+    // Create unique ID for progress bar
+    const progressId = 'progress-' + Date.now();
     
     toast.innerHTML = `
-        <div class="toast-icon">${notificationType.icon}</div>
-        <div class="toast-content">
-            <div class="toast-title">${escapeHtml(title)}</div>
-            <div class="toast-message">${escapeHtml(message)}</div>
+        <div class="toast-header">
+            <div class="toast-title">
+                ${notificationType.icon} ${escapeHtml(title)}
+            </div>
+            <button class="toast-close" onclick="closeToast(this)">×</button>
         </div>
-        <button class="toast-close" onclick="closeToast(this)">×</button>
+        <div class="toast-body">
+            ${escapeHtml(message)}
+        </div>
+        <div id="${progressId}" class="toast-progress"></div>
     `;
     
-    // Add to container with animation
+    // Add to container (slides in automatically with CSS)
     container.appendChild(toast);
     
-    // Trigger slide-in animation
-    setTimeout(() => {
-        toast.classList.add('toast-show');
-    }, 10);
-    
-    // Auto-dismiss after duration
+    // Auto-dismiss with progress bar animation
     const timeoutId = setTimeout(() => {
         dismissToast(toast);
     }, displayDuration);
     
+    // Update progress bar duration
+    const progressBar = toast.querySelector('.toast-progress');
+    if (progressBar) {
+        progressBar.style.animationDuration = `${displayDuration}ms`;
+    }
+    
     // Store timeout ID for manual dismissal
     toast.dataset.timeoutId = timeoutId;
+    
+    // Click anywhere on toast to dismiss
+    toast.addEventListener('click', (e) => {
+        if (!e.target.classList.contains('toast-close')) {
+            dismissToast(toast);
+        }
+    });
     
     // Optional: Play notification sound
     // playNotificationSound(type);

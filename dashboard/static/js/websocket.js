@@ -379,13 +379,19 @@ class DashboardWebSocket {
     flashScreen(color) {
         const flashDiv = document.getElementById('price-flash');
         if (flashDiv) {
-            flashDiv.className = `flash-overlay flash-${color}`;
-            flashDiv.style.display = 'block';
-            
-            setTimeout(() => {
-                flashDiv.style.display = 'none';
+            // Use the new CSS animation classes
+            if (color === 'green') {
+                flashDiv.className = 'trade-flash-buy';
+            } else if (color === 'red') {
+                flashDiv.className = 'trade-flash-sell';
+            } else {
                 flashDiv.className = 'flash-overlay';
-            }, 300);
+            }
+            
+            // Reset after animation completes (500ms)
+            setTimeout(() => {
+                flashDiv.className = '';
+            }, 500);
         }
     }
 

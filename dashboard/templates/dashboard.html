@@ -83,7 +83,10 @@
 
 {% block content %}
 <!-- Connection Status Indicator -->
-<div id="connection-status" class="connection-status">🔴 Connecting...</div>
+<div id="connection-status" class="connection-status disconnected">🔴 Connecting...</div>
+
+<!-- Toast Notification Container -->
+<div id="toast-container" class="toast-container"></div>
 
 <!-- Flash Overlay for Trade Notifications -->
 <div id="price-flash" class="flash-overlay"></div>
