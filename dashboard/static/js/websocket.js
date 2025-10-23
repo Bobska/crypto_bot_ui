@@ -37,6 +37,34 @@ class DashboardWebSocket {
         // Request initial status
         this.send({ command: 'get_status' });
         this.send({ command: 'get_stats' });
+        
+        // Start automatic status polling every 2 seconds
+        this.startPolling();
+    }
+    
+    startPolling() {
+        // Clear any existing polling interval
+        if (this.pollingInterval) {
+            clearInterval(this.pollingInterval);
+        }
+        
+        // Poll for status updates every 2 seconds
+        this.pollingInterval = setInterval(() => {
+            if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                this.send({ command: 'get_status' });
+                this.send({ command: 'get_stats' });
+            }
+        }, 2000);
+        
+        console.log('🔄 Started automatic status polling (every 2 seconds)');
+    }
+    
+    stopPolling() {
+        if (this.pollingInterval) {
+            clearInterval(this.pollingInterval);
+            this.pollingInterval = null;
+            console.log('⏸️ Stopped automatic status polling');
+        }
     }
 
     onMessage(event) {
@@ -78,6 +106,9 @@ class DashboardWebSocket {
     onClose(event) {
         console.log('❌ WebSocket disconnected');
         this.updateConnectionStatus(false);
+        
+        // Stop polling when disconnected
+        this.stopPolling();
         
         // Attempt to reconnect
         this.handleReconnect();
