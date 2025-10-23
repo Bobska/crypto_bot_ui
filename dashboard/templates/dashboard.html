@@ -85,6 +85,11 @@
 <!-- Connection Status Indicator -->
 <div id="connection-status" class="connection-status disconnected">🔴 Connecting...</div>
 
+<!-- Sound Toggle Button -->
+<button id="sound-toggle" class="btn btn-sm btn-outline-secondary" style="position: fixed; top: 60px; right: 20px; z-index: 9997; border-radius: 20px;" onclick="toggleSounds()" title="Toggle sound notifications">
+    🔊 Sounds ON
+</button>
+
 <!-- Toast Notification Container -->
 <div id="toast-container" class="toast-container"></div>
 
@@ -324,5 +329,23 @@
         // Recalculate total value every time price updates
         setInterval(calculateTotalValue, 1000);
     });
+    
+    // Toggle sound notifications
+    function toggleSounds() {
+        const button = document.getElementById('sound-toggle');
+        const currentState = ws.soundsEnabled;
+        
+        // Toggle state
+        ws.toggleSounds(!currentState);
+        
+        // Update button text and style
+        if (ws.soundsEnabled) {
+            button.textContent = '🔊 Sounds ON';
+            button.className = 'btn btn-sm btn-outline-success';
+        } else {
+            button.textContent = '🔇 Sounds OFF';
+            button.className = 'btn btn-sm btn-outline-secondary';
+        }
+    }
 </script>
 {% endblock %}

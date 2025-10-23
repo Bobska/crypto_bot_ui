@@ -10,6 +10,10 @@ class DashboardWebSocket {
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
         this.reconnectDelay = 5000; // 5 seconds
+        
+        // Initialize audio context for sound notifications
+        this.audioContext = null;
+        this.soundsEnabled = true; // Can be toggled by user
     }
 
     connect() {
@@ -238,8 +242,14 @@ class DashboardWebSocket {
         // Request fresh stats after trade
         this.send({ command: 'request_stats' });
         
-        // Play notification sound (optional - uncomment to enable)
-        // this.playNotificationSound();
+        // Play sound notification based on trade action
+        if (this.soundsEnabled) {
+            if (action === 'BUY') {
+                this.playBuySound();
+            } else if (action === 'SELL') {
+                this.playSellSound();
+            }
+        }
     }
 
     updatePrice(data) {
@@ -424,15 +434,98 @@ class DashboardWebSocket {
         }
     }
 
-    playNotificationSound() {
-        // Optional: Play notification sound for trades
-        // Uncomment and customize as needed
+    initAudioContext() {
+        /**
+         * Initialize Web Audio API context
+         * Must be called after user interaction (browser security requirement)
+         */
+        if (!this.audioContext) {
+            try {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                console.log('🔊 Audio context initialized');
+            } catch (err) {
+                console.warn('Web Audio API not supported:', err);
+                this.soundsEnabled = false;
+            }
+        }
+    }
+
+    playTone(frequency, duration, type = 'sine') {
+        /**
+         * Play a tone using Web Audio API
+         * @param {number} frequency - Frequency in Hz (e.g., 440 for A4)
+         * @param {number} duration - Duration in milliseconds
+         * @param {string} type - Waveform type: 'sine', 'square', 'sawtooth', 'triangle'
+         */
+        if (!this.audioContext) {
+            this.initAudioContext();
+        }
+        
+        if (!this.audioContext) return;
+        
         try {
-            const audio = new Audio('/static/sounds/notification.mp3');
-            audio.volume = 0.5;
-            audio.play().catch(err => console.log('Audio play failed:', err));
+            // Create oscillator for tone generation
+            const oscillator = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+            
+            // Configure oscillator
+            oscillator.type = type;
+            oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+            
+            // Configure gain (volume) with fade out
+            gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration / 1000);
+            
+            // Connect nodes: oscillator -> gain -> output
+            oscillator.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+            
+            // Play tone
+            oscillator.start(this.audioContext.currentTime);
+            oscillator.stop(this.audioContext.currentTime + duration / 1000);
+            
         } catch (err) {
-            console.log('Notification sound not available');
+            console.warn('Failed to play tone:', err);
+        }
+    }
+
+    playBuySound() {
+        /**
+         * Play BUY sound - Higher pitched, optimistic tone
+         * Frequency: 800Hz (higher = positive)
+         * Duration: 150ms (quick beep)
+         */
+        console.log('🔊 Playing BUY sound (800Hz)');
+        
+        // Play two ascending tones for BUY
+        this.playTone(600, 100, 'sine');
+        setTimeout(() => this.playTone(800, 150, 'sine'), 80);
+    }
+
+    playSellSound() {
+        /**
+         * Play SELL sound - Lower pitched, neutral tone
+         * Frequency: 400Hz (lower = neutral/caution)
+         * Duration: 150ms (quick beep)
+         */
+        console.log('🔊 Playing SELL sound (400Hz)');
+        
+        // Play two descending tones for SELL
+        this.playTone(500, 100, 'sine');
+        setTimeout(() => this.playTone(350, 150, 'sine'), 80);
+    }
+
+    toggleSounds(enabled) {
+        /**
+         * Enable or disable sound notifications
+         * @param {boolean} enabled - True to enable, false to disable
+         */
+        this.soundsEnabled = enabled;
+        console.log(`🔊 Sound notifications ${enabled ? 'enabled' : 'disabled'}`);
+        
+        // Initialize audio context on first enable (requires user interaction)
+        if (enabled && !this.audioContext) {
+            this.initAudioContext();
         }
     }
 
