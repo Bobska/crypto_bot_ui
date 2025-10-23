@@ -34,6 +34,9 @@ class TradingChart {
     initializeChart() {
         try {
             console.log('Creating chart with LightweightCharts:', typeof LightweightCharts);
+            if (LightweightCharts && LightweightCharts.version) {
+                console.log('LightweightCharts version:', LightweightCharts.version);
+            }
             console.log('Container:', this.container);
             console.log('Container dimensions:', this.container.clientWidth, 'x', this.container.clientHeight);
             
@@ -82,6 +85,7 @@ class TradingChart {
             this.chart = LightweightCharts.createChart(this.container, chartOptions);
             console.log('Chart created:', this.chart);
             console.log('Chart methods:', Object.keys(this.chart));
+            console.log('typeof chart.addCandlestickSeries:', typeof (this.chart && this.chart.addCandlestickSeries));
 
             if (!this.chart || typeof this.chart.addCandlestickSeries !== 'function') {
                 console.error('Chart object is invalid or missing addCandlestickSeries method');
