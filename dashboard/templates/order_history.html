@@ -1,0 +1,333 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Order History - Crypto Bot{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 1px solid #374151;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 15px;
+    }
+    
+    .stat-label {
+        font-size: 0.85rem;
+        color: #9ca3af;
+        margin-bottom: 5px;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #f3f4f6;
+    }
+    
+    .stat-value.positive {
+        color: #22c55e;
+    }
+    
+    .stat-value.negative {
+        color: #ef4444;
+    }
+    
+    .filter-card {
+        background: #1f2937;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 1px solid #374151;
+    }
+    
+    .table-dark {
+        background-color: #1f2937;
+    }
+    
+    .table-dark th {
+        background-color: #374151;
+        color: #f3f4f6;
+        border-color: #4b5563;
+    }
+    
+    .table-dark td {
+        border-color: #4b5563;
+        color: #d1d5db;
+    }
+    
+    .table-dark tbody tr:hover {
+        background-color: #2d3748;
+    }
+    
+    .badge-buy {
+        background-color: #22c55e;
+    }
+    
+    .badge-sell {
+        background-color: #ef4444;
+    }
+    
+    .pagination {
+        margin-top: 20px;
+    }
+    
+    .pagination .page-link {
+        background-color: #374151;
+        border-color: #4b5563;
+        color: #f3f4f6;
+    }
+    
+    .pagination .page-link:hover {
+        background-color: #4b5563;
+        border-color: #6b7280;
+    }
+    
+    .pagination .page-item.active .page-link {
+        background-color: #3b82f6;
+        border-color: #3b82f6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-history"></i> Order History</h2>
+        <a href="{% url 'trades' %}" class="btn btn-outline-primary">
+            <i class="fas fa-chart-line"></i> Simple View
+        </a>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="stats-card">
+        <div class="row">
+            <div class="col-md-2 stat-item">
+                <div class="stat-label">Total Trades</div>
+                <div class="stat-value">{{ summary_stats.total_trades }}</div>
+            </div>
+            <div class="col-md-2 stat-item">
+                <div class="stat-label">Total Volume</div>
+                <div class="stat-value">{{ summary_stats.total_volume|floatformat:6 }} BTC</div>
+            </div>
+            <div class="col-md-2 stat-item">
+                <div class="stat-label">Total Fees</div>
+                <div class="stat-value negative">${{ summary_stats.total_fees_paid|floatformat:2 }}</div>
+            </div>
+            <div class="col-md-2 stat-item">
+                <div class="stat-label">Net P&L</div>
+                <div class="stat-value {% if summary_stats.net_pnl >= 0 %}positive{% else %}negative{% endif %}">
+                    ${{ summary_stats.net_pnl|floatformat:2 }}
+                </div>
+            </div>
+            <div class="col-md-2 stat-item">
+                <div class="stat-label">Avg Duration</div>
+                <div class="stat-value">
+                    {% if summary_stats.avg_trade_duration %}
+                        {{ summary_stats.avg_trade_duration }} min
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-2 stat-item">
+                <div class="stat-label">Best Trade</div>
+                <div class="stat-value positive">
+                    {% if summary_stats.best_trade %}
+                        ${{ summary_stats.best_trade.net_pnl|floatformat:2 }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-card">
+        <h5 class="mb-3"><i class="fas fa-filter"></i> Filters</h5>
+        <form method="get" class="row g-3">
+            <div class="col-md-2">
+                <label for="from_date" class="form-label">From Date</label>
+                <input type="date" class="form-control" id="from_date" name="from_date" 
+                       value="{{ filters.from_date }}">
+            </div>
+            <div class="col-md-2">
+                <label for="to_date" class="form-label">To Date</label>
+                <input type="date" class="form-control" id="to_date" name="to_date" 
+                       value="{{ filters.to_date }}">
+            </div>
+            <div class="col-md-2">
+                <label for="trade_type" class="form-label">Type</label>
+                <select class="form-select" id="trade_type" name="trade_type">
+                    <option value="">All</option>
+                    <option value="BUY" {% if filters.trade_type == 'BUY' %}selected{% endif %}>BUY</option>
+                    <option value="SELL" {% if filters.trade_type == 'SELL' %}selected{% endif %}>SELL</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="result" class="form-label">Result</label>
+                <select class="form-select" id="result" name="result">
+                    <option value="">All</option>
+                    <option value="WIN" {% if filters.result == 'WIN' %}selected{% endif %}>WIN</option>
+                    <option value="LOSS" {% if filters.result == 'LOSS' %}selected{% endif %}>LOSS</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="symbol" class="form-label">Symbol</label>
+                <input type="text" class="form-control" id="symbol" name="symbol" 
+                       value="{{ filters.symbol }}" placeholder="BTC/USDT">
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search"></i> Apply
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Order History Table -->
+    <div class="card bg-dark">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Symbol</th>
+                            <th>Type</th>
+                            <th>Price</th>
+                            <th>Amount</th>
+                            <th>Entry Price</th>
+                            <th>Exit Price</th>
+                            <th>Duration</th>
+                            <th>Fee</th>
+                            <th>Net P&L</th>
+                            <th>ROI</th>
+                            <th>Status</th>
+                            <th>Result</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for trade in trades %}
+                        <tr>
+                            <td>{{ trade.timestamp|date:"Y-m-d H:i:s" }}</td>
+                            <td>{{ trade.symbol }}</td>
+                            <td>
+                                <span class="badge {% if trade.action == 'BUY' %}badge-buy{% else %}badge-sell{% endif %}">
+                                    {{ trade.action }}
+                                </span>
+                            </td>
+                            <td>${{ trade.price|floatformat:2 }}</td>
+                            <td>{{ trade.amount|floatformat:6 }}</td>
+                            <td>
+                                {% if trade.entry_price %}
+                                    ${{ trade.entry_price|floatformat:2 }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if trade.exit_price %}
+                                    ${{ trade.exit_price|floatformat:2 }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if trade.duration_minutes %}
+                                    {{ trade.duration_minutes }} min
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-danger">${{ trade.fee_paid|floatformat:4 }}</td>
+                            <td class="{% if trade.net_pnl %}{% if trade.net_pnl >= 0 %}text-success{% else %}text-danger{% endif %}{% endif %}">
+                                {% if trade.net_pnl %}
+                                    ${{ trade.net_pnl|floatformat:2 }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% with roi=trade.calculate_roi %}
+                                    {% if roi %}
+                                        <span class="{% if roi >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                            {{ roi|floatformat:2 }}%
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                            <td>
+                                <span class="badge {% if trade.status == 'CLOSED' %}bg-secondary{% else %}bg-info{% endif %}">
+                                    {{ trade.status }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if trade.result %}
+                                    <span class="badge {% if trade.result == 'WIN' %}bg-success{% else %}bg-danger{% endif %}">
+                                        {{ trade.result }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="13" class="text-center text-muted">No trades found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if trades.has_other_pages %}
+            <nav aria-label="Order history pagination">
+                <ul class="pagination justify-content-center">
+                    {% if trades.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if filters.from_date %}&from_date={{ filters.from_date }}{% endif %}{% if filters.to_date %}&to_date={{ filters.to_date }}{% endif %}{% if filters.trade_type %}&trade_type={{ filters.trade_type }}{% endif %}{% if filters.result %}&result={{ filters.result }}{% endif %}{% if filters.symbol %}&symbol={{ filters.symbol }}{% endif %}">
+                                First
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ trades.previous_page_number }}{% if filters.from_date %}&from_date={{ filters.from_date }}{% endif %}{% if filters.to_date %}&to_date={{ filters.to_date }}{% endif %}{% if filters.trade_type %}&trade_type={{ filters.trade_type }}{% endif %}{% if filters.result %}&result={{ filters.result }}{% endif %}{% if filters.symbol %}&symbol={{ filters.symbol }}{% endif %}">
+                                Previous
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    <li class="page-item active">
+                        <span class="page-link">
+                            Page {{ trades.number }} of {{ trades.paginator.num_pages }}
+                        </span>
+                    </li>
+
+                    {% if trades.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ trades.next_page_number }}{% if filters.from_date %}&from_date={{ filters.from_date }}{% endif %}{% if filters.to_date %}&to_date={{ filters.to_date }}{% endif %}{% if filters.trade_type %}&trade_type={{ filters.trade_type }}{% endif %}{% if filters.result %}&result={{ filters.result }}{% endif %}{% if filters.symbol %}&symbol={{ filters.symbol }}{% endif %}">
+                                Next
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ trades.paginator.num_pages }}{% if filters.from_date %}&from_date={{ filters.from_date }}{% endif %}{% if filters.to_date %}&to_date={{ filters.to_date }}{% endif %}{% if filters.trade_type %}&trade_type={{ filters.trade_type }}{% endif %}{% if filters.result %}&result={{ filters.result }}{% endif %}{% if filters.symbol %}&symbol={{ filters.symbol }}{% endif %}">
+                                Last
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

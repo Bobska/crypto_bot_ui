@@ -344,6 +344,12 @@
                         <a class="nav-link {% if request.resolver_match.url_name == 'trades' %}active{% endif %}" 
                            href="{% url 'trades' %}">
                             <i class="fas fa-chart-line"></i> Trade History
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'order_history' %}active{% endif %}" 
+                           href="{% url 'order_history' %}">
+                            <i class="fas fa-history"></i> Order History
+                        </a>
+                    </li>
                         </a>
                     </li>
                     <li class="nav-item">
