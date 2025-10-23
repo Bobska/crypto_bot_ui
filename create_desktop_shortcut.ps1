@@ -26,11 +26,12 @@ Write-Host "Shortcut Location: $shortcutPath" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Double-click 'Start Crypto Bot' on your desktop to:" -ForegroundColor Yellow
 Write-Host "  1. Start Redis Server" -ForegroundColor White
-Write-Host "  2. Start Bot API (Port 8002)" -ForegroundColor White
-Write-Host "  3. Start Daphne Dashboard (Port 8001)" -ForegroundColor White
+Write-Host "  2. Start Trading Bot (main.py - core trading engine)" -ForegroundColor White
+Write-Host "  3. Start Bot API (Port 8002)" -ForegroundColor White
 Write-Host "  4. Start AI Bot" -ForegroundColor White
-Write-Host "  5. Verify all services are running" -ForegroundColor White
-Write-Host "  6. Auto-open Crypto Dashboard & AI Bot UI in browser" -ForegroundColor White
+Write-Host "  5. Start Daphne Dashboard (Port 8001)" -ForegroundColor White
+Write-Host "  6. Verify all services are running" -ForegroundColor White
+Write-Host "  7. Auto-open Crypto Dashboard & AI Bot UI in browser" -ForegroundColor White
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host ""

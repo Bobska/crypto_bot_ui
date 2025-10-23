@@ -6,21 +6,23 @@
 
 The shortcut will:
 - ✅ Start Redis Server (Port 6379)
+- ✅ Start Trading Bot (main.py - the actual trading engine)
 - ✅ Start Bot API (Port 8002)  
-- ✅ Start Daphne Dashboard (Port 8001)
 - ✅ Start AI Bot (Port 7860)
+- ✅ Start Daphne Dashboard (Port 8001)
 - ✅ Verify all services are running
 - ✅ Auto-open both UIs in your browser
 
 ## What You'll See
 
-Four terminal windows will open showing live logs:
+Five terminal windows will open showing live logs:
 1. **Redis** - Message broker for real-time updates
-2. **Bot API** - Trading bot backend
-3. **Daphne** - Django dashboard server
+2. **Trading Bot** - Core trading engine executing trades
+3. **Bot API** - REST/WebSocket API server
 4. **AI Bot** - AI assistant interface
+5. **Daphne** - Django dashboard server
 
-A fifth window shows the startup status and verification.
+A sixth window shows the startup status and verification.
 
 Your browser will automatically open two tabs:
 - **Crypto Trading Dashboard** (http://localhost:8001)
@@ -85,9 +87,10 @@ Press **Ctrl+C** in each terminal window to stop the services gracefully.
 | Service | Port | Purpose |
 |---------|------|---------|
 | Redis | 6379 | Message broker for real-time WebSocket updates |
-| Bot API | 8002 | Trading bot backend & WebSocket endpoint |
-| Daphne | 8001 | Django dashboard with WebSocket support |
+| Trading Bot | N/A | Core trading engine (executes actual trades) |
+| Bot API | 8002 | REST/WebSocket API server for dashboard |
 | AI Bot | 7860 | AI assistant interface (Gradio/Streamlit) |
+| Daphne | 8001 | Django dashboard with WebSocket support |
 
 ## Features
 

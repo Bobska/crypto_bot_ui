@@ -36,12 +36,13 @@ Write-Host ""
 
 # STARTUP ORDER:
 # 1. Redis (dependency for Daphne's channels)
-# 2. Bot API (independent service)
-# 3. AI Bot (independent service)  
-# 4. Daphne (depends on Redis)
+# 2. Trading Bot (main.py - the actual trading engine)
+# 3. Bot API (provides REST/WebSocket endpoints for dashboard)
+# 4. AI Bot (independent AI assistant service)
+# 5. Daphne (dashboard server - depends on Redis)
 
 # Start Redis
-Write-Host "[1/4] Starting Redis Server..." -ForegroundColor Yellow
+Write-Host "[1/5] Starting Redis Server..." -ForegroundColor Yellow
 Write-Host "      Redis must start first (required by Daphne)" -ForegroundColor Gray
 $redisScript = Join-Path $PSScriptRoot "start_redis_direct.ps1"
 if (Test-Path $redisScript) {
@@ -53,8 +54,21 @@ if (Test-Path $redisScript) {
 Write-Host "      Waiting for Redis to initialize..." -ForegroundColor Gray
 Start-Sleep -Seconds 4
 
-# Start Bot API
-Write-Host "[2/4] Starting Bot API (Port 8002)..." -ForegroundColor Yellow
+# Start Trading Bot (the actual trading engine)
+Write-Host "[2/5] Starting Trading Bot (main.py)..." -ForegroundColor Yellow
+Write-Host "      This is the core trading engine" -ForegroundColor Gray
+$tradingBotScript = "c:\dev-projects\crypto-trading-bot\start_trading_bot.ps1"
+if (Test-Path $tradingBotScript) {
+    Start-Process powershell -ArgumentList "-NoExit", "-File", $tradingBotScript
+    Write-Host "      [OK] Trading Bot terminal opened" -ForegroundColor Green
+} else {
+    Write-Host "      [ERROR] Trading Bot script not found: $tradingBotScript" -ForegroundColor Red
+}
+Start-Sleep -Seconds 3
+
+# Start Bot API (provides endpoints for dashboard)
+Write-Host "[3/5] Starting Bot API (Port 8002)..." -ForegroundColor Yellow
+Write-Host "      API server for dashboard communication" -ForegroundColor Gray
 $botApiScript = "c:\dev-projects\crypto-trading-bot\start_bot_api.ps1"
 if (Test-Path $botApiScript) {
     Start-Process powershell -ArgumentList "-NoExit", "-File", $botApiScript
@@ -65,7 +79,7 @@ if (Test-Path $botApiScript) {
 Start-Sleep -Seconds 2
 
 # Start AI Bot
-Write-Host "[3/4] Starting AI Bot..." -ForegroundColor Yellow
+Write-Host "[4/5] Starting AI Bot..." -ForegroundColor Yellow
 $aiBotScript = Join-Path $PSScriptRoot "start_ai_bot.ps1"
 if (Test-Path $aiBotScript) {
     Start-Process powershell -ArgumentList "-NoExit", "-File", $aiBotScript
@@ -76,7 +90,7 @@ if (Test-Path $aiBotScript) {
 Start-Sleep -Seconds 2
 
 # Start Daphne (depends on Redis being ready)
-Write-Host "[4/4] Starting Daphne (Port 8001)..." -ForegroundColor Yellow
+Write-Host "[5/5] Starting Daphne (Port 8001)..." -ForegroundColor Yellow
 Write-Host "      Daphne requires Redis for WebSocket channels" -ForegroundColor Gray
 $daphneScript = Join-Path $PSScriptRoot "start_daphne.ps1"
 if (Test-Path $daphneScript) {
@@ -89,8 +103,8 @@ Start-Sleep -Seconds 3
 
 Write-Host ""
 Write-Host "Waiting for all services to fully initialize..." -ForegroundColor Yellow
-Write-Host "(Redis, Bot API, AI Bot, Daphne)" -ForegroundColor Gray
-Start-Sleep -Seconds 10
+Write-Host "(Redis, Trading Bot, Bot API, AI Bot, Daphne)" -ForegroundColor Gray
+Start-Sleep -Seconds 12
 
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Cyan
@@ -121,9 +135,10 @@ Write-Host "============================================================" -Foreg
 if ($allRunning) {
     Write-Host "   ALL SERVICES RUNNING!" -ForegroundColor Green
     Write-Host ""
-    Write-Host "   Dashboard: http://localhost:8001" -ForegroundColor Cyan
-    Write-Host "   Bot API:   http://localhost:8002" -ForegroundColor Cyan
-    Write-Host "   AI Bot:    Check terminal for status" -ForegroundColor Cyan
+    Write-Host "   Dashboard:    http://localhost:8001" -ForegroundColor Cyan
+    Write-Host "   Bot API:      http://localhost:8002" -ForegroundColor Cyan
+    Write-Host "   Trading Bot:  Check terminal for trades" -ForegroundColor Cyan
+    Write-Host "   AI Bot:       http://localhost:7860" -ForegroundColor Cyan
     Write-Host ""
     
     # Open browsers automatically
