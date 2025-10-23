@@ -149,6 +149,23 @@ def controls_view(request):
     return render(request, 'controls.html', context)
 
 
+def trading_terminal_view(request):
+    """Professional trading terminal view"""
+    api_client = BotAPIClient()
+    
+    # Fetch data from bot API
+    bot_status = api_client.get_status()
+    stats = api_client.get_stats()
+    
+    context = {
+        'bot_status': bot_status,
+        'stats': stats,
+        'page_title': 'Trading Terminal',
+    }
+    
+    return render(request, 'trading_terminal.html', context)
+
+
 def logs_view(request):
     """Bot logs view"""
     log_lines = []

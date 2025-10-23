@@ -7,6 +7,7 @@ urlpatterns = [
     path('settings/', views.settings_view, name='settings'),
     path('controls/', views.controls_view, name='controls'),
     path('logs/', views.logs_view, name='logs'),
+    path('terminal/', views.trading_terminal_view, name='trading_terminal'),
     
     # API endpoints
     path('api/status/', views.api_status, name='api_status'),
