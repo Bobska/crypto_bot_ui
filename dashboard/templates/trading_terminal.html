@@ -552,7 +552,7 @@
                 
                 <div class="balance-display mb-3">
                     <div class="balance-label">Available Balance</div>
-                    <div class="balance-value">$950.00 USDT</div>
+                    <div class="balance-value" id="available-usdt-balance">$950.00 USDT</div>
                 </div>
 
                 <label class="form-label text-muted">Amount (BTC)</label>
@@ -581,10 +581,10 @@
                 </div>
 
                 <div class="d-grid gap-2">
-                    <button class="btn-trade-buy" onclick="manualBuy()" id="manual-buy-btn" disabled>
+                    <button class="btn-trade-buy" id="manual-buy-btn" disabled>
                         <i class="fas fa-arrow-up"></i> BUY
                     </button>
-                    <button class="btn-trade-sell" onclick="manualSell()" id="manual-sell-btn" disabled>
+                    <button class="btn-trade-sell" id="manual-sell-btn" disabled>
                         <i class="fas fa-arrow-down"></i> SELL
                     </button>
                 </div>
@@ -762,16 +762,7 @@ document.getElementById('confirm-risks').addEventListener('change', function() {
     sellBtn.disabled = !this.checked;
 });
 
-// Update estimated value when amount changes
-document.getElementById('manual-amount').addEventListener('input', function() {
-    const amount = parseFloat(this.value) || 0;
-    const price = 45000; // Get from real price feed
-    const value = amount * price;
-    const fee = value * 0.001;
-    
-    document.getElementById('manual-estimated-value').textContent = '$' + value.toFixed(2);
-    document.getElementById('manual-fee').textContent = '$' + fee.toFixed(2);
-});
+// ManualTrading handles estimated value/fee updates
 
 // Update header timestamp
 function updateTimestamp() {
@@ -788,9 +779,11 @@ updateTimestamp();
 <script src="{% static 'js/trading-chart.js' %}"></script>
 <!-- PnL Calculator Library -->
 <script src="{% static 'js/pnl-calculator.js' %}"></script>
+<!-- Manual Trading Library -->
+<script src="{% static 'js/manual-trading.js' %}"></script>
 
 <script>
-// Initialize TradingChart after library is loaded
+// Initialize TradingChart and ManualTrading after libraries are loaded
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Initializing TradingChart...');
     
@@ -848,6 +841,28 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('TradingChart initialized successfully');
     } else {
         console.error('Failed to initialize TradingChart');
+    }
+
+    // Initialize ManualTrading
+    try {
+        window.__manualTrading = new ManualTrading({
+            feeRate: 0.001,
+            maxTradeSize: 0.5,
+            minTradeSize: 0.001,
+            apiBase: 'http://localhost:8002',
+            selectors: {
+                amount: '#manual-amount',
+                buyButton: '#manual-buy-btn',
+                sellButton: '#manual-sell-btn',
+                estimated: '#manual-estimated-value',
+                fee: '#manual-fee',
+                availableUSDT: '#available-usdt-balance',
+                availableBTC: '#portfolio-btc'
+            }
+        });
+        console.log('ManualTrading initialized');
+    } catch (e) {
+        console.error('ManualTrading init failed:', e);
     }
 });
 </script>
