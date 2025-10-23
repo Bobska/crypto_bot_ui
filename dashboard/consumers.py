@@ -10,21 +10,21 @@ class DashboardConsumer(AsyncWebsocketConsumer):
     """WebSocket consumer for real-time trading bot updates"""
     
     async def connect(self):
-        """Accept WebSocket connection and send initial status"""
+        """Accept WebSocket connection and send initial status once"""
         await self.accept()
         
         # Initialize API client
         self.bot_api = BotAPIClient()
         
-        # Add to dashboard channel group
+        # Add to dashboard channel group for receiving bot broadcasts
         await self.channel_layer.group_add(
             'dashboard',
             self.channel_name
         )
         
-        print("✅ Dashboard WebSocket connected")
+        print("✅ Dashboard WebSocket connected - relay mode (no polling)")
         
-        # Send initial status on connect
+        # Send initial status once only - no polling
         await self.send_status()
     
     async def disconnect(self, close_code):
@@ -38,34 +38,35 @@ class DashboardConsumer(AsyncWebsocketConsumer):
         print(f"❌ Dashboard WebSocket disconnected (code: {close_code})")
     
     async def receive(self, text_data):
-        """Handle incoming WebSocket messages"""
+        """Handle incoming WebSocket messages from frontend - NO POLLING"""
         try:
             data = json.loads(text_data)
             command = data.get('command')
             
-            if command == 'get_status':
+            # Only respond to explicit requests - no automatic polling
+            if command == 'request_status':
+                # Send current status once on demand
                 await self.send_status()
             
-            elif command == 'get_stats':
+            elif command == 'request_stats':
+                # Send current stats once on demand
                 await self.send_stats()
             
             elif command == 'start_bot':
+                # Forward command to bot API
                 response = self.bot_api.start_bot()
                 await self.send_json({
                     'type': 'bot_control',
                     'data': response
                 })
-                # Broadcast status change to all clients
-                await self.broadcast_to_group('status_change', {'bot_running': True})
             
             elif command == 'stop_bot':
+                # Forward command to bot API
                 response = self.bot_api.stop_bot()
                 await self.send_json({
                     'type': 'bot_control',
                     'data': response
                 })
-                # Broadcast status change to all clients
-                await self.broadcast_to_group('status_change', {'bot_running': False})
         
         except json.JSONDecodeError:
             await self.send_json({
@@ -134,3 +135,13 @@ class DashboardConsumer(AsyncWebsocketConsumer):
             'type': event['message_type'],
             'data': event['data']
         })
+    
+    async def bot_update(self, event):
+        """
+        Receives broadcast messages from bot_api manager via channel layer
+        This is the relay point - bot pushes updates, we forward to frontend
+        """
+        await self.send(text_data=json.dumps({
+            'type': event['type'],
+            'data': event['data']
+        }))

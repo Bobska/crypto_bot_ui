@@ -28,43 +28,18 @@ class DashboardWebSocket {
     }
 
     onOpen(event) {
-        console.log('✅ WebSocket connected');
+        console.log('✅ WebSocket connected - relay mode (push only, no polling)');
         this.reconnectAttempts = 0;
         
         // Update connection status indicator
         this.updateConnectionStatus(true);
         
-        // Request initial status
-        this.send({ command: 'get_status' });
-        this.send({ command: 'get_stats' });
+        // Request initial status once only
+        this.send({ command: 'request_status' });
+        this.send({ command: 'request_stats' });
         
-        // Start automatic status polling every 2 seconds
-        this.startPolling();
-    }
-    
-    startPolling() {
-        // Clear any existing polling interval
-        if (this.pollingInterval) {
-            clearInterval(this.pollingInterval);
-        }
-        
-        // Poll for status updates every 2 seconds
-        this.pollingInterval = setInterval(() => {
-            if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-                this.send({ command: 'get_status' });
-                this.send({ command: 'get_stats' });
-            }
-        }, 2000);
-        
-        console.log('🔄 Started automatic status polling (every 2 seconds)');
-    }
-    
-    stopPolling() {
-        if (this.pollingInterval) {
-            clearInterval(this.pollingInterval);
-            this.pollingInterval = null;
-            console.log('⏸️ Stopped automatic status polling');
-        }
+        // NO POLLING - rely on server push from bot_api broadcasts
+        console.log('� Listening for pushed updates from bot...');
     }
 
     onMessage(event) {
@@ -107,8 +82,7 @@ class DashboardWebSocket {
         console.log('❌ WebSocket disconnected');
         this.updateConnectionStatus(false);
         
-        // Stop polling when disconnected
-        this.stopPolling();
+        // NO POLLING - connection closed, will rely on push after reconnect
         
         // Attempt to reconnect
         this.handleReconnect();
@@ -204,7 +178,7 @@ class DashboardWebSocket {
     }
 
     handleNewTrade(data) {
-        console.log('New trade:', data);
+        console.log('📊 New trade pushed from bot:', data);
         
         // Show notification
         const action = data.action || 'TRADE';
@@ -216,9 +190,8 @@ class DashboardWebSocket {
         // Flash the screen
         this.flashScreen(action === 'BUY' ? 'green' : 'blue');
         
-        // Request updated stats
-        this.send({ command: 'get_stats' });
-        this.send({ command: 'get_status' });
+        // NO POLLING - updates will be pushed automatically by bot
+        // The trade broadcast should include updated status/stats
         
         // Optionally play sound
         // this.playNotificationSound();
