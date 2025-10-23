@@ -32,73 +32,93 @@ class TradingChart {
      * Initialize the chart with dark theme configuration
      */
     initializeChart() {
-        const chartOptions = {
-            layout: {
-                background: { color: '#1a1a2e' },
-                textColor: '#d1d4dc',
-            },
-            grid: {
-                vertLines: { color: '#2a2a3e' },
-                horzLines: { color: '#2a2a3e' },
-            },
-            crosshair: {
-                mode: LightweightCharts.CrosshairMode.Normal,
-                vertLine: {
-                    color: '#758696',
-                    width: 1,
-                    style: 3, // dashed
-                    labelBackgroundColor: '#3b82f6',
+        try {
+            console.log('Creating chart with LightweightCharts:', typeof LightweightCharts);
+            console.log('Container:', this.container);
+            console.log('Container dimensions:', this.container.clientWidth, 'x', this.container.clientHeight);
+            
+            const chartOptions = {
+                layout: {
+                    background: { color: '#1a1a2e' },
+                    textColor: '#d1d4dc',
                 },
-                horzLine: {
-                    color: '#758696',
-                    width: 1,
-                    style: 3,
-                    labelBackgroundColor: '#3b82f6',
+                grid: {
+                    vertLines: { color: '#2a2a3e' },
+                    horzLines: { color: '#2a2a3e' },
                 },
-            },
-            timeScale: {
-                borderColor: '#485c7b',
-                timeVisible: true,
-                secondsVisible: false,
-                rightOffset: 12,
-                barSpacing: 10,
-            },
-            rightPriceScale: {
-                borderColor: '#485c7b',
+                crosshair: {
+                    mode: LightweightCharts.CrosshairMode.Normal,
+                    vertLine: {
+                        color: '#758696',
+                        width: 1,
+                        style: 3, // dashed
+                        labelBackgroundColor: '#3b82f6',
+                    },
+                    horzLine: {
+                        color: '#758696',
+                        width: 1,
+                        style: 3,
+                        labelBackgroundColor: '#3b82f6',
+                    },
+                },
+                timeScale: {
+                    borderColor: '#485c7b',
+                    timeVisible: true,
+                    secondsVisible: false,
+                    rightOffset: 12,
+                    barSpacing: 10,
+                },
+                rightPriceScale: {
+                    borderColor: '#485c7b',
+                    scaleMargins: {
+                        top: 0.1,
+                        bottom: 0.2,
+                    },
+                },
+                width: this.container.clientWidth,
+                height: 500,
+            };
+
+            this.chart = LightweightCharts.createChart(this.container, chartOptions);
+            console.log('Chart created:', this.chart);
+            console.log('Chart methods:', Object.keys(this.chart));
+
+            if (!this.chart || typeof this.chart.addCandlestickSeries !== 'function') {
+                console.error('Chart object is invalid or missing addCandlestickSeries method');
+                console.error('Chart type:', typeof this.chart);
+                console.error('Available methods:', this.chart ? Object.keys(this.chart) : 'null');
+                return;
+            }
+
+            // Add candlestick series
+            this.candleSeries = this.chart.addCandlestickSeries({
+                upColor: '#22c55e',
+                downColor: '#ef4444',
+                borderVisible: false,
+                wickUpColor: '#22c55e',
+                wickDownColor: '#ef4444',
+        });
+
+            // Add volume series (histogram below main chart)
+            this.volumeSeries = this.chart.addHistogramSeries({
+                color: '#26a69a',
+                priceFormat: {
+                    type: 'volume',
+                },
+                priceScaleId: '', // empty string means overlay on main price scale
                 scaleMargins: {
-                    top: 0.1,
-                    bottom: 0.2,
+                    top: 0.8,
+                    bottom: 0,
                 },
-            },
-            width: this.container.clientWidth,
-            height: 500,
-        };
+            });
 
-        this.chart = LightweightCharts.createChart(this.container, chartOptions);
-
-        // Add candlestick series
-        this.candleSeries = this.chart.addCandlestickSeries({
-            upColor: '#22c55e',
-            downColor: '#ef4444',
-            borderVisible: false,
-            wickUpColor: '#22c55e',
-            wickDownColor: '#ef4444',
-        });
-
-        // Add volume series (histogram below main chart)
-        this.volumeSeries = this.chart.addHistogramSeries({
-            color: '#26a69a',
-            priceFormat: {
-                type: 'volume',
-            },
-            priceScaleId: '', // empty string means overlay on main price scale
-            scaleMargins: {
-                top: 0.8,
-                bottom: 0,
-            },
-        });
-
-        console.log('TradingChart initialized');
+            console.log('TradingChart initialized successfully');
+            console.log('Candlestick series:', this.candleSeries);
+            console.log('Volume series:', this.volumeSeries);
+        } catch (error) {
+            console.error('Error initializing TradingChart:', error);
+            console.error('Error stack:', error.stack);
+        }
     }
 
     /**
