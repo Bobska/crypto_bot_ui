@@ -1,4 +1,4 @@
-# Enhanced START_ALL Script with Visual Feedback
+cd C:\dev-projects\crypto-bot-ui\dashboard\static\js# Enhanced START_ALL Script with Visual Feedback
 # Launches all services in separate terminal windows
 
 Write-Host "============================================================" -ForegroundColor Cyan

@@ -657,25 +657,8 @@ const portfolioChart = new Chart(portfolioCtx, {
     }
 });
 
-// Initialize TradingChart with our custom class
+// Global trading chart instance
 let tradingChart = null;
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize trading chart
-    tradingChart = new TradingChart('tradingChart');
-    
-    // Load initial historical data
-    tradingChart.loadHistoricalData('BTC/USDT', '1D');
-    
-    // Add sample grid lines (will be replaced with real bot strategy levels)
-    tradingChart.addGridLines(44000, 46000);
-    
-    // Subscribe to WebSocket if available
-    if (typeof websocket !== 'undefined' && websocket) {
-        tradingChart.subscribeToWebSocket(websocket);
-        console.log('Trading chart subscribed to WebSocket');
-    }
-});
 
 // Trading Functions
 function quickBuy() {
@@ -803,4 +786,38 @@ updateTimestamp();
 {% block extra_js %}
 <!-- Trading Chart Library -->
 <script src="{% static 'js/trading-chart.js' %}"></script>
+
+<script>
+// Initialize TradingChart after library is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Initializing TradingChart...');
+    
+    // Check if LightweightCharts is available
+    if (typeof LightweightCharts === 'undefined') {
+        console.error('LightweightCharts library not loaded!');
+        return;
+    }
+    
+    // Initialize trading chart
+    tradingChart = new TradingChart('tradingChart');
+    
+    if (tradingChart && tradingChart.chart) {
+        // Load initial historical data
+        tradingChart.loadHistoricalData('BTC/USDT', '1D');
+        
+        // Add sample grid lines (will be replaced with real bot strategy levels)
+        tradingChart.addGridLines(44000, 46000);
+        
+        // Subscribe to WebSocket if available
+        if (typeof websocket !== 'undefined' && websocket) {
+            tradingChart.subscribeToWebSocket(websocket);
+            console.log('Trading chart subscribed to WebSocket');
+        }
+        
+        console.log('TradingChart initialized successfully');
+    } else {
+        console.error('Failed to initialize TradingChart');
+    }
+});
+</script>
 {% endblock %}

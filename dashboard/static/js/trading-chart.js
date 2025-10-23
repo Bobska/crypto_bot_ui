@@ -10,6 +10,12 @@ class TradingChart {
             return;
         }
 
+        // Check if LightweightCharts is loaded
+        if (typeof LightweightCharts === 'undefined') {
+            console.error('LightweightCharts library not loaded. Please include the CDN script before trading-chart.js');
+            return;
+        }
+
         this.chart = null;
         this.candleSeries = null;
         this.volumeSeries = null;
