@@ -459,24 +459,29 @@
 
             <!-- AI Advisor Card -->
             <div class="terminal-card">
-                <h5><i class="fas fa-robot"></i> AI Advisor</h5>
-                <select class="amount-selector" id="ai-mode">
-                    <option value="conservative">Conservative</option>
-                    <option value="balanced" selected>Balanced</option>
-                    <option value="aggressive">Aggressive</option>
+                <h5><i class="fas fa-robot"></i> AI Co-Pilot</h5>
+                <label class="form-label text-muted">AI Mode</label>
+                <select class="amount-selector" id="aiMode">
+                    <option value="opinion">Opinion Only</option>
+                    <option value="suggest">Suggest Trades</option>
+                    <option value="copilot">Co-Pilot Mode</option>
                 </select>
                 <div class="ai-message-box" id="ai-message">
-                    Market shows bullish momentum. Consider holding position. Target: $46,500. Risk level: Low.
+                    <small class="text-muted">AI initializing...</small>
                 </div>
                 <div>
                     <small class="text-muted">Confidence</small>
-                    <div class="confidence-bar">
-                        <div class="confidence-fill" id="ai-confidence" style="width: 75%;"></div>
+                    <div class="confidence-bar" style="display: none;">
+                        <div class="confidence-fill" id="ai-confidence" style="width: 0%;"></div>
                     </div>
                 </div>
-                <button class="btn btn-outline-light btn-sm w-100 mt-3" onclick="askAI()">
-                    <i class="fas fa-comments"></i> Ask AI
-                </button>
+                <div class="mt-3">
+                    <input type="text" class="amount-selector" id="aiQuestion" 
+                           placeholder="Ask AI a question..." style="margin-bottom: 10px;">
+                    <button class="btn btn-outline-light btn-sm w-100" id="askAI">
+                        <i class="fas fa-comments"></i> Ask AI
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -736,23 +741,7 @@ function setTimeframe(timeframe) {
     }
 }
 
-function askAI() {
-    const mode = document.getElementById('ai-mode').value;
-    console.log('Asking AI in mode:', mode);
-    showNotification('AI Query', 'Analyzing market conditions...', 'info');
-    
-    // Simulate AI response
-    setTimeout(() => {
-        const messages = [
-            'Strong buy signal detected. Target: $47,000. Stop loss: $44,500.',
-            'Market consolidating. Suggest holding current position.',
-            'Bearish divergence detected. Consider reducing exposure.',
-            'Bullish momentum building. Good time to enter long position.'
-        ];
-        const randomMessage = messages[Math.floor(Math.random() * messages.length)];
-        document.getElementById('ai-message').textContent = randomMessage;
-    }, 1000);
-}
+// askAI() now handled by AICoPilot instance
 
 // Enable/disable manual trading buttons based on risk confirmation
 document.getElementById('confirm-risks').addEventListener('change', function() {
@@ -781,9 +770,11 @@ updateTimestamp();
 <script src="{% static 'js/pnl-calculator.js' %}"></script>
 <!-- Manual Trading Library -->
 <script src="{% static 'js/manual-trading.js' %}"></script>
+<!-- AI Co-Pilot Library -->
+<script src="{% static 'js/ai-copilot.js' %}"></script>
 
 <script>
-// Initialize TradingChart and ManualTrading after libraries are loaded
+// Initialize TradingChart, ManualTrading, and AICoPilot after libraries are loaded
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Initializing TradingChart...');
     
@@ -863,6 +854,30 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('ManualTrading initialized');
     } catch (e) {
         console.error('ManualTrading init failed:', e);
+    }
+
+    // Initialize AICoPilot
+    try {
+        window.__aiCoPilot = new AICoPilot({
+            mode: 'opinion',
+            apiBase: 'http://localhost:8002',
+            selectors: {
+                modeSelect: '#aiMode',
+                adviceBox: '#ai-message',
+                confidenceBar: '#ai-confidence',
+                askButton: '#askAI',
+                questionInput: '#aiQuestion'
+            }
+        });
+        console.log('AICoPilot initialized');
+
+        // Subscribe to WebSocket if available
+        if (typeof websocket !== 'undefined' && websocket) {
+            window.__aiCoPilot.subscribeToWebSocket(websocket);
+            console.log('AICoPilot subscribed to WebSocket');
+        }
+    } catch (e) {
+        console.error('AICoPilot init failed:', e);
     }
 });
 </script>
