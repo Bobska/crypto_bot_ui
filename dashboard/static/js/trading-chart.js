@@ -217,7 +217,21 @@ class TradingChart {
                         return;
                     }
 
-                    // SUCCESS - we have candle data, now build tooltip
+                    // CRITICAL: Only show tooltip if hovering over actual price data
+                    // Check if cursor Y position is within the candle's high/low range
+                    if (param.point && candleData.high && candleData.low) {
+                        // Convert Y coordinate to price using chart's price scale
+                        const priceScale = this.candleSeries.priceScale();
+                        const price = priceScale.coordinateToPrice(param.point.y);
+                        
+                        // Only show tooltip if cursor is within candle's high/low range
+                        if (price < candleData.low || price > candleData.high) {
+                            tooltip.style.display = 'none';
+                            return;
+                        }
+                    }
+
+                    // SUCCESS - we have candle data AND cursor is over the candle, now build tooltip
 
                     // Format timestamp
                     const date = new Date(param.time * 1000);
