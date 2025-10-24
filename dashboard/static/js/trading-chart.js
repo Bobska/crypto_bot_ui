@@ -145,6 +145,139 @@ class TradingChart {
                 },
             });
 
+            // --- Tooltip (crosshair hover) ---------------------------------
+            // Ensure container is positioned to anchor the tooltip
+            if (this.container && getComputedStyle(this.container).position === 'static') {
+                this.container.style.position = 'relative';
+            }
+
+            // Create tooltip element
+            const tooltip = document.createElement('div');
+            tooltip.style.cssText = `
+                position: absolute;
+                display: none;
+                padding: 8px 12px;
+                background: rgba(26, 26, 46, 0.95);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 4px;
+                color: #d1d4dc;
+                font-size: 12px;
+                line-height: 1.6;
+                pointer-events: none;
+                z-index: 1000;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                white-space: nowrap;
+            `;
+            this.container.appendChild(tooltip);
+            this.tooltip = tooltip;
+
+            // Subscribe to crosshair move events to update tooltip
+            this.chart.subscribeCrosshairMove((param) => {
+                if (
+                    param === undefined ||
+                    param.point === undefined ||
+                    !param.time ||
+                    param.point.x < 0 ||
+                    param.point.y < 0 ||
+                    param.point.x > this.container.clientWidth ||
+                    param.point.y > this.container.clientHeight
+                ) {
+                    tooltip.style.display = 'none';
+                    return;
+                }
+
+                // Get data for the candle under the crosshair
+                const data = param.seriesData && (typeof param.seriesData.get === 'function')
+                    ? param.seriesData.get(this.candleSeries)
+                    : null;
+
+                if (!data) {
+                    tooltip.style.display = 'none';
+                    return;
+                }
+
+                // Format date/time in local (NZ shown as example)
+                const t = param.time;
+                let dateObj;
+                if (typeof t === 'number') {
+                    dateObj = new Date(t * 1000);
+                } else if (t && typeof t === 'object') {
+                    // BusinessDay-like object { year, month, day }
+                    const y = t.year || 1970;
+                    const m = (t.month || 1) - 1;
+                    const d = t.day || 1;
+                    dateObj = new Date(Date.UTC(y, m, d));
+                } else {
+                    dateObj = new Date();
+                }
+
+                const dateStr = dateObj.toLocaleDateString('en-NZ', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    weekday: 'short'
+                });
+                const timeStr = dateObj.toLocaleTimeString('en-NZ', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                });
+
+                // Determine candle color and change values
+                const isGreen = Number(data.close) >= Number(data.open);
+                const color = isGreen ? '#26a69a' : '#ef5350';
+                const change = Number(data.close) - Number(data.open);
+                const changePercent = Number(data.open) ? (change / Number(data.open)) * 100 : 0;
+                const changeSign = change >= 0 ? '+' : '';
+
+                // Build tooltip HTML
+                tooltip.innerHTML = `
+                    <div style="font-weight: bold; margin-bottom: 6px; color: ${color}">
+                        ${dateStr} ${timeStr}
+                    </div>
+                    <div style="display: grid; grid-template-columns: auto auto; gap: 8px 16px;">
+                        <span style="color: #888">Open:</span>
+                        <span style="font-weight: 600">$${Number(data.open).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                        
+                        <span style="color: #888">High:</span>
+                        <span style="font-weight: 600; color: #26a69a">$${Number(data.high).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                        
+                        <span style="color: #888">Low:</span>
+                        <span style="font-weight: 600; color: #ef5350">$${Number(data.low).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                        
+                        <span style="color: #888">Close:</span>
+                        <span style="font-weight: 600">$${Number(data.close).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                        
+                        <span style="color: #888">Change:</span>
+                        <span style="font-weight: 600; color: ${color}">
+                            ${changeSign}$${Math.abs(change).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                            (${changeSign}${changePercent.toFixed(2)}%)
+                        </span>
+                        
+                        <span style="color: #888">Volume:</span>
+                        <span style="font-weight: 600">${data.volume ? Number(data.volume).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : 'N/A'}</span>
+                    </div>
+                `;
+
+                // Position tooltip near the cursor, keep within bounds
+                const tooltipWidth = 280;
+                const tooltipHeight = 200;
+                let left = param.point.x + 15;
+                let top = param.point.y + 15;
+
+                if (left + tooltipWidth > this.container.clientWidth) {
+                    left = param.point.x - tooltipWidth - 15;
+                }
+                if (top + tooltipHeight > this.container.clientHeight) {
+                    top = param.point.y - tooltipHeight - 15;
+                }
+
+                tooltip.style.display = 'block';
+                tooltip.style.left = left + 'px';
+                tooltip.style.top = top + 'px';
+            });
+            // ----------------------------------------------------------------
+
             console.log('TradingChart initialized successfully');
             console.log('Candlestick series:', this.candleSeries);
             console.log('Volume series:', this.volumeSeries);
