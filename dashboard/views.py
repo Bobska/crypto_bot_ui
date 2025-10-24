@@ -1,10 +1,13 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Q, Sum, Avg, Count, Max, Min
 from django.utils import timezone
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
+from django.core.paginator import Paginator
 from datetime import datetime, timedelta
+from decimal import Decimal
 from .api_client import BotAPIClient
+import csv
 from .models import Trade, BotSettings
 import os
 import re
@@ -79,6 +82,145 @@ def trades_view(request):
     return render(request, 'trades.html', context)
 
 
+def order_history_view(request):
+    """Detailed order history view with advanced filtering and statistics"""
+    # Get filter parameters
+    from_date = request.GET.get('from_date')
+    to_date = request.GET.get('to_date')
+    trade_type = request.GET.get('trade_type')  # BUY or SELL
+    result = request.GET.get('result')  # WIN or LOSS
+    symbol = request.GET.get('symbol', 'BTC/USDT')
+    
+    # Start with all trades for the symbol
+    trades_qs = Trade.objects.filter(symbol=symbol)
+    
+    # Apply date filters
+    if from_date:
+        try:
+            from_date_obj = datetime.strptime(from_date, '%Y-%m-%d').date()
+            trades_qs = trades_qs.filter(timestamp__date__gte=from_date_obj)
+        except ValueError:
+            pass
+    
+    if to_date:
+        try:
+            to_date_obj = datetime.strptime(to_date, '%Y-%m-%d').date()
+            trades_qs = trades_qs.filter(timestamp__date__lte=to_date_obj)
+        except ValueError:
+            pass
+    
+    # Apply type and result filters
+    if trade_type and trade_type in ['BUY', 'SELL']:
+        trades_qs = trades_qs.filter(action=trade_type)
+    
+    if result and result in ['WIN', 'LOSS']:
+        trades_qs = trades_qs.filter(result=result)
+    
+    # Order by timestamp descending
+    trades_qs = trades_qs.order_by('-timestamp')
+
+    # CSV export of all filtered trades
+    if request.GET.get('export') == 'csv':
+        response = HttpResponse(content_type='text/csv')
+        filename_parts = [
+            'order_history',
+            (from_date or 'start'),
+            (to_date or 'end'),
+            (trade_type or 'ALL').lower() if trade_type else 'all',
+            (result or 'ALL').lower() if result else 'all',
+            (symbol or 'all').replace('/', '-')
+        ]
+        response['Content-Disposition'] = f"attachment; filename={'_'.join(filename_parts)}.csv"
+        writer = csv.writer(response)
+        writer.writerow([
+            'ID', 'Timestamp', 'Symbol', 'Type', 'Entry Price', 'Exit Price', 'Amount', 'Fee Paid',
+            'Duration (min)', 'Net PnL ($)', 'ROI (%)', 'Status', 'Result', 'Notes'
+        ])
+        for t in trades_qs:
+            try:
+                roi = t.calculate_roi()
+            except Exception:
+                roi = None
+            status = getattr(t, 'status', 'UNKNOWN')
+            writer.writerow([
+                getattr(t, 'id', ''),
+                t.timestamp.strftime('%Y-%m-%d %H:%M:%S') if getattr(t, 'timestamp', None) else '',
+                getattr(t, 'symbol', ''),
+                getattr(t, 'action', ''),
+                getattr(t, 'entry_price', ''),
+                getattr(t, 'exit_price', ''),
+                getattr(t, 'amount', ''),
+                getattr(t, 'fee_paid', ''),
+                getattr(t, 'duration_minutes', ''),
+                getattr(t, 'net_pnl', ''),
+                round(roi, 4) if roi is not None else '',
+                status,
+                getattr(t, 'result', ''),
+                (getattr(t, 'notes', '') or '').replace('\n', ' ').strip(),
+            ])
+        return response
+    
+    # Calculate summary statistics
+    total_trades = trades_qs.count()
+    
+    summary_stats = {
+        'total_trades': total_trades,
+        'total_volume': Decimal('0.00'),
+        'total_fees_paid': Decimal('0.00'),
+        'net_pnl': Decimal('0.00'),
+        'avg_trade_duration': None,
+        'best_trade': None,
+        'worst_trade': None,
+    }
+    
+    if total_trades > 0:
+        # Aggregate statistics
+        agg = trades_qs.aggregate(
+            total_volume=Sum('amount'),
+            total_fees=Sum('fee_paid'),
+            net_pnl=Sum('net_pnl'),
+            avg_duration=Avg('duration_minutes'),
+        )
+        
+        summary_stats['total_volume'] = agg['total_volume'] or Decimal('0.00')
+        summary_stats['total_fees_paid'] = agg['total_fees'] or Decimal('0.00')
+        summary_stats['net_pnl'] = agg['net_pnl'] or Decimal('0.00')
+        summary_stats['avg_trade_duration'] = int(agg['avg_duration']) if agg['avg_duration'] else None
+        
+        # Find best and worst trades (by net P&L)
+        best = trades_qs.filter(net_pnl__isnull=False).order_by('-net_pnl').first()
+        worst = trades_qs.filter(net_pnl__isnull=False).order_by('net_pnl').first()
+        
+        summary_stats['best_trade'] = best
+        summary_stats['worst_trade'] = worst
+    
+    # Top 5 best/worst from current filters
+    best_trades = list(trades_qs.filter(net_pnl__isnull=False).order_by('-net_pnl')[:5])
+    worst_trades = list(trades_qs.filter(net_pnl__isnull=False).order_by('net_pnl')[:5])
+
+    # Paginate trades (50 per page)
+    paginator = Paginator(trades_qs, 50)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'trades': page_obj,
+        'summary_stats': summary_stats,
+        'filters': {
+            'from_date': from_date,
+            'to_date': to_date,
+            'trade_type': trade_type,
+            'result': result,
+            'symbol': symbol,
+        },
+        'best_trades': best_trades,
+        'worst_trades': worst_trades,
+        'page_title': 'Order History',
+    }
+    
+    return render(request, 'order_history.html', context)
+
+
 def settings_view(request):
     """Settings management view"""
     settings_obj = BotSettings.get_settings()
@@ -147,6 +289,23 @@ def controls_view(request):
     }
     
     return render(request, 'controls.html', context)
+
+
+def trading_terminal_view(request):
+    """Professional trading terminal view"""
+    api_client = BotAPIClient()
+    
+    # Fetch data from bot API
+    bot_status = api_client.get_status()
+    stats = api_client.get_stats()
+    
+    context = {
+        'bot_status': bot_status,
+        'stats': stats,
+        'page_title': 'Trading Terminal',
+    }
+    
+    return render(request, 'trading_terminal.html', context)
 
 
 def logs_view(request):

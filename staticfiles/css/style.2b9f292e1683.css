@@ -1,0 +1,615 @@
+/**
+ * Real-Time Dashboard Styles
+ * Animations and feedback for WebSocket updates
+ */
+
+/* ============================================================================
+   TRADE FLASH ANIMATIONS - Full screen flash on BUY/SELL
+   ========================================================================= */
+
+.trade-flash-buy,
+.trade-flash-sell {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 9998; /* Below toast notifications (9999) */
+    animation: flash-fade 0.5s ease-in-out;
+}
+
+.trade-flash-buy {
+    background-color: rgba(34, 197, 94, 0.3); /* Green with 30% opacity */
+}
+
+.trade-flash-sell {
+    background-color: rgba(239, 68, 68, 0.3); /* Red with 30% opacity */
+}
+
+@keyframes flash-fade {
+    0% {
+        opacity: 0;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+/* ============================================================================
+   PRICE CHANGE INDICATORS - Arrows with animations
+   ========================================================================= */
+
+.price-up,
+.price-down,
+.price-unchanged {
+    display: inline-block;
+    margin-left: 8px;
+    font-size: 1.2em;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.price-up {
+    color: #22c55e;
+    animation: pulse-green 1s ease-in-out infinite;
+}
+
+.price-up::before {
+    content: '↑';
+}
+
+.price-down {
+    color: #ef4444;
+    animation: pulse-red 1s ease-in-out infinite;
+}
+
+.price-down::before {
+    content: '↓';
+}
+
+.price-unchanged {
+    color: #9ca3af;
+}
+
+.price-unchanged::before {
+    content: '→';
+}
+
+@keyframes pulse-green {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+    }
+}
+
+@keyframes pulse-red {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+    }
+}
+
+/* Element flash animations for quick updates */
+.flash-green {
+    animation: element-flash-green 0.8s ease-out;
+}
+
+.flash-red {
+    animation: element-flash-red 0.8s ease-out;
+}
+
+@keyframes element-flash-green {
+    0% {
+        background-color: transparent;
+    }
+    50% {
+        background-color: rgba(34, 197, 94, 0.3);
+    }
+    100% {
+        background-color: transparent;
+    }
+}
+
+@keyframes element-flash-red {
+    0% {
+        background-color: transparent;
+    }
+    50% {
+        background-color: rgba(239, 68, 68, 0.3);
+    }
+    100% {
+        background-color: transparent;
+    }
+}
+
+/* ============================================================================
+   STATUS CHANGE ANIMATIONS - Smooth transitions
+   ========================================================================= */
+
+.status-transition {
+    transition: all 0.5s ease-in-out;
+}
+
+.status-changed {
+    animation: status-pulse 1s ease-in-out;
+}
+
+@keyframes status-pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+    }
+}
+
+/* Badge status indicators */
+.badge {
+    display: inline-block;
+    padding: 0.25em 0.6em;
+    font-size: 0.875em;
+    font-weight: 600;
+    line-height: 1;
+    color: #fff;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.375rem;
+    transition: all 0.3s ease;
+}
+
+.badge-success {
+    background-color: #22c55e;
+}
+
+.badge-secondary {
+    background-color: #6b7280;
+}
+
+.badge-info {
+    background-color: #3b82f6;
+}
+
+.badge-warning {
+    background-color: #eab308;
+}
+
+.badge-danger {
+    background-color: #ef4444;
+}
+
+/* ============================================================================
+   TOAST NOTIFICATIONS - Modern card design with animations
+   ========================================================================= */
+
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 400px;
+    pointer-events: none;
+}
+
+.toast {
+    position: relative;
+    background: white;
+    border-radius: 12px;
+    padding: 16px 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    animation: slide-in-right 0.3s ease-out;
+    pointer-events: auto;
+    cursor: pointer;
+    overflow: hidden;
+    min-width: 300px;
+    transition: all 0.3s ease;
+}
+
+.toast:hover {
+    transform: translateX(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+}
+
+.toast.toast-exit {
+    animation: slide-out-right 0.3s ease-in;
+}
+
+@keyframes slide-in-right {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slide-out-right {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+}
+
+/* Toast types with left border accent */
+.toast-trade {
+    border-left: 4px solid #3b82f6; /* Blue */
+}
+
+.toast-success {
+    border-left: 4px solid #22c55e; /* Green */
+}
+
+.toast-error {
+    border-left: 4px solid #ef4444; /* Red */
+}
+
+.toast-warning {
+    border-left: 4px solid #eab308; /* Yellow */
+}
+
+.toast-info {
+    border-left: 4px solid #06b6d4; /* Cyan */
+}
+
+/* Toast header */
+.toast-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.toast-title {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #1f2937;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.toast-close:hover {
+    background-color: #f3f4f6;
+    color: #4b5563;
+}
+
+/* Toast body */
+.toast-body {
+    font-size: 0.875rem;
+    color: #6b7280;
+    line-height: 1.5;
+}
+
+/* Toast progress bar (auto-dismiss indicator) */
+.toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #3b82f6, #06b6d4);
+    animation: progress-shrink 5s linear;
+}
+
+.toast-trade .toast-progress {
+    background: linear-gradient(90deg, #3b82f6, #06b6d4);
+}
+
+.toast-success .toast-progress {
+    background: linear-gradient(90deg, #22c55e, #10b981);
+}
+
+.toast-error .toast-progress {
+    background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+.toast-warning .toast-progress {
+    background: linear-gradient(90deg, #eab308, #f59e0b);
+}
+
+@keyframes progress-shrink {
+    from {
+        width: 100%;
+    }
+    to {
+        width: 0%;
+    }
+}
+
+/* ============================================================================
+   CONNECTION STATUS INDICATOR - Top-right badge
+   ========================================================================= */
+
+.connection-status {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    font-size: 0.875rem;
+    font-weight: 600;
+    z-index: 9997;
+    transition: all 0.3s ease;
+}
+
+.connection-status::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+/* Connected - Green pulsing */
+.connection-status.connected {
+    color: #22c55e;
+}
+
+.connection-status.connected::before {
+    background-color: #22c55e;
+    animation: pulse-connected 2s ease-in-out infinite;
+}
+
+@keyframes pulse-connected {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+    }
+    50% {
+        box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+    }
+}
+
+/* Reconnecting - Yellow pulsing */
+.connection-status.reconnecting {
+    color: #eab308;
+}
+
+.connection-status.reconnecting::before {
+    background-color: #eab308;
+    animation: pulse-reconnecting 1s ease-in-out infinite;
+}
+
+@keyframes pulse-reconnecting {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.7);
+        opacity: 1;
+    }
+    50% {
+        box-shadow: 0 0 0 6px rgba(234, 179, 8, 0);
+        opacity: 0.5;
+    }
+}
+
+/* Disconnected - Red, no pulse */
+.connection-status.disconnected {
+    color: #ef4444;
+}
+
+.connection-status.disconnected::before {
+    background-color: #ef4444;
+}
+
+/* ============================================================================
+   TRADE HISTORY TABLE - Row highlight animation
+   ========================================================================= */
+
+.trade-row-new {
+    animation: row-highlight 2s ease-out;
+}
+
+@keyframes row-highlight {
+    0% {
+        background-color: rgba(59, 130, 246, 0.3);
+    }
+    100% {
+        background-color: transparent;
+    }
+}
+
+/* ============================================================================
+   LOADING & SKELETON STATES
+   ========================================================================= */
+
+.skeleton {
+    background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s ease-in-out infinite;
+    border-radius: 4px;
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* ============================================================================
+   COUNTER ANIMATIONS - Smooth number transitions
+   ========================================================================= */
+
+.counter {
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.counter-up {
+    animation: counter-increment 0.5s ease-out;
+}
+
+.counter-down {
+    animation: counter-decrement 0.5s ease-out;
+}
+
+@keyframes counter-increment {
+    0% {
+        transform: scale(1);
+        color: inherit;
+    }
+    50% {
+        transform: scale(1.2);
+        color: #22c55e;
+    }
+    100% {
+        transform: scale(1);
+        color: inherit;
+    }
+}
+
+@keyframes counter-decrement {
+    0% {
+        transform: scale(1);
+        color: inherit;
+    }
+    50% {
+        transform: scale(1.2);
+        color: #ef4444;
+    }
+    100% {
+        transform: scale(1);
+        color: inherit;
+    }
+}
+
+/* ============================================================================
+   UTILITY CLASSES
+   ========================================================================= */
+
+.fade-in {
+    animation: fade-in 0.3s ease-in;
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.fade-out {
+    animation: fade-out 0.3s ease-out;
+}
+
+@keyframes fade-out {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ============================================================================
+   RESPONSIVE ADJUSTMENTS
+   ========================================================================= */
+
+@media (max-width: 768px) {
+    .toast-container {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+    
+    .toast {
+        min-width: auto;
+    }
+    
+    .connection-status {
+        top: 10px;
+        right: 10px;
+        font-size: 0.75rem;
+        padding: 6px 12px;
+    }
+}
+
+/* ============================================================================
+   DARK MODE SUPPORT (Optional)
+   ========================================================================= */
+
+@media (prefers-color-scheme: dark) {
+    .toast {
+        background: #1f2937;
+        color: #f3f4f6;
+    }
+    
+    .toast-title {
+        color: #f9fafb;
+    }
+    
+    .toast-body {
+        color: #d1d5db;
+    }
+    
+    .toast-close {
+        color: #9ca3af;
+    }
+    
+    .toast-close:hover {
+        background-color: #374151;
+        color: #e5e7eb;
+    }
+    
+    .connection-status {
+        background: #1f2937;
+    }
+}

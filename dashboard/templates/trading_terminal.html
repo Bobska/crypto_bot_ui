@@ -1,0 +1,723 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Trading Terminal - Crypto Bot{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/trading-terminal.css' %}">
+<style>
+    /* Trading Terminal Custom Styles */
+    .terminal-header {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        padding: 20px;
+        margin: -20px -20px 20px -20px;
+        border-radius: 8px 8px 0 0;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+    
+    .symbol-badge {
+        background: #0f3460;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        display: inline-block;
+        margin-right: 20px;
+    }
+    
+    .price-display {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+        display: inline-block;
+    }
+    
+    .price-change {
+        font-size: 1.2rem;
+        margin-left: 15px;
+        padding: 5px 12px;
+        border-radius: 8px;
+        font-weight: 600;
+    }
+    
+    .price-change.positive {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+    }
+    
+    .price-change.negative {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+    }
+    
+    .terminal-card {
+        background: #1f2937;
+        border: 1px solid #374151;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .terminal-card:hover {
+        box-shadow: 0 8px 12px rgba(0, 0, 0, 0.3);
+        border-color: #4b5563;
+    }
+    
+    .terminal-card h5 {
+        color: #f3f4f6;
+        margin-bottom: 15px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .status-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        animation: pulse-indicator 2s infinite;
+    }
+    
+    .status-indicator.active {
+        background: #22c55e;
+        box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+    }
+    
+    .status-indicator.inactive {
+        background: #ef4444;
+    }
+    
+    @keyframes pulse-indicator {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.6; }
+    }
+    
+    .pnl-positive {
+        color: #22c55e;
+        font-weight: 600;
+    }
+    
+    .pnl-negative {
+        color: #ef4444;
+        font-weight: 600;
+    }
+    
+    .btn-trade-buy {
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 12px;
+        width: 100%;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-trade-buy:hover {
+        background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(34, 197, 94, 0.3);
+    }
+    
+    .btn-trade-sell {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 12px;
+        width: 100%;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-trade-sell:hover {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(239, 68, 68, 0.3);
+    }
+    
+    .btn-bot-control {
+        background: #3b82f6;
+        border: none;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-bot-control:hover {
+        background: #2563eb;
+        transform: translateY(-1px);
+    }
+    
+    .amount-selector {
+        background: #374151;
+        border: 1px solid #4b5563;
+        color: #f3f4f6;
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        width: 100%;
+    }
+    
+    .amount-selector:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .timeframe-selector {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .timeframe-btn {
+        background: #374151;
+        border: 1px solid #4b5563;
+        color: #9ca3af;
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    
+    .timeframe-btn:hover {
+        background: #4b5563;
+        color: #f3f4f6;
+    }
+    
+    .timeframe-btn.active {
+        background: #3b82f6;
+        color: white;
+        border-color: #3b82f6;
+    }
+    
+    .order-history-table {
+        font-size: 0.85rem;
+        color: #d1d5db;
+    }
+    
+    .order-history-table th {
+        background: #374151;
+        color: #f3f4f6;
+        font-weight: 600;
+        padding: 10px 8px;
+        border: none;
+    }
+    
+    .order-history-table td {
+        padding: 10px 8px;
+        border-bottom: 1px solid #374151;
+    }
+    
+    .order-history-table tr:hover {
+        background: #2d3748;
+    }
+    
+    .portfolio-chart-container {
+        height: 120px;
+        margin-top: 15px;
+    }
+    
+    .ai-message-box {
+        background: #374151;
+        border-radius: 8px;
+        padding: 12px;
+        max-height: 120px;
+        overflow-y: auto;
+        margin: 10px 0;
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+    
+    .confidence-bar {
+        height: 8px;
+        background: #374151;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 10px;
+    }
+    
+    .confidence-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #22c55e 0%, #3b82f6 100%);
+        transition: width 0.5s ease;
+    }
+    
+    .if-sold-now {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        padding: 15px;
+        border-radius: 8px;
+        margin: 15px 0;
+        text-align: center;
+    }
+    
+    .if-sold-now .label {
+        font-size: 0.85rem;
+        color: #bfdbfe;
+        margin-bottom: 5px;
+    }
+    
+    .if-sold-now .value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: white;
+    }
+    
+    .risk-warning {
+        background: rgba(234, 179, 8, 0.1);
+        border: 1px solid #eab308;
+        color: #fbbf24;
+        padding: 10px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        margin: 10px 0;
+    }
+    
+    .settings-dropdown {
+        position: absolute;
+        right: 20px;
+        top: 20px;
+    }
+    
+    .balance-display {
+        background: #374151;
+        padding: 12px;
+        border-radius: 8px;
+        margin: 10px 0;
+    }
+    
+    .balance-label {
+        font-size: 0.85rem;
+        color: #9ca3af;
+    }
+    
+    .balance-value {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #f3f4f6;
+    }
+    
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #374151;
+    }
+    
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        color: #9ca3af;
+        font-size: 0.9rem;
+    }
+    
+    .info-value {
+        color: #f3f4f6;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Terminal Header -->
+    <div class="terminal-header">
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <span class="symbol-badge">
+                    <i class="fab fa-bitcoin"></i> BTC/USDT
+                </span>
+                <span class="price-display" id="header-price">$45,000.00</span>
+                <span class="price-change positive" id="header-change">
+                    <i class="fas fa-arrow-up"></i> +2.5%
+                </span>
+            </div>
+            <div class="text-end">
+                <small class="text-muted d-block">Last Updated</small>
+                <span id="header-timestamp">--:--:--</span>
+            </div>
+        </div>
+        
+        <!-- Settings Dropdown -->
+        <div class="dropdown settings-dropdown">
+            <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-cog"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark">
+                <li><a class="dropdown-item" href="#"><i class="fas fa-chart-line"></i> Chart Settings</a></li>
+                <li><a class="dropdown-item" href="#"><i class="fas fa-bell"></i> Notifications</a></li>
+                <li><a class="dropdown-item" href="#"><i class="fas fa-palette"></i> Theme</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="{% url 'dashboard' %}"><i class="fas fa-tachometer-alt"></i> Back to Dashboard</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Main Content Row -->
+    <div class="row">
+        <!-- Left Sidebar -->
+        <div class="col-md-3">
+            <!-- Portfolio Card -->
+            <div class="terminal-card">
+                <h5><i class="fas fa-wallet"></i> Portfolio</h5>
+                <div class="balance-display">
+                    <div class="balance-label">Total Value</div>
+                    <div class="balance-value" id="total-portfolio-value">$5,450.00</div>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">BTC</span>
+                    <span class="info-value" id="portfolio-btc">0.100000</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">USDT</span>
+                    <span class="info-value" id="portfolio-usdt">$950.00</span>
+                </div>
+                <div class="portfolio-chart-container">
+                    <canvas id="portfolioChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Position Card -->
+            <div class="terminal-card">
+                <h5><i class="fas fa-chart-line"></i> Current Position</h5>
+                <div id="pnlContainer">
+                    <div class="info-row">
+                        <span class="info-label">Entry Price</span>
+                        <span class="info-value" id="entry-price">$44,000.00</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Current Price</span>
+                        <span class="info-value" id="current-position-price">$45,000.00</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Unrealized P&L</span>
+                        <span class="info-value pnl-positive" id="unrealized-pnl">+$100.00 (+2.27%)</span>
+                    </div>
+                    
+                    <div class="if-sold-now">
+                        <div class="label">If Sold Now</div>
+                        <div class="value" id="if-sold-value">$4,600.00</div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-trade-sell" onclick="quickSell()">
+                    <i class="fas fa-hand-holding-usd"></i> Quick Sell Position
+                </button>
+            </div>
+
+            <!-- Bot Status Card -->
+            <div class="terminal-card">
+                <h5>
+                    <span class="status-indicator active" id="bot-status-indicator"></span>
+                    Bot Status
+                </h5>
+                <div class="info-row">
+                    <span class="info-label">Strategy</span>
+                    <span class="info-value">Grid Trading</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Next Action</span>
+                    <span class="info-value" id="next-action">SELL at $46,000</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Target Price</span>
+                    <span class="info-value" id="target-price">$46,000.00</span>
+                </div>
+                <button class="btn btn-bot-control w-100 mt-3" id="bot-toggle-btn" onclick="toggleBot()">
+                    <i class="fas fa-pause"></i> Pause Bot
+                </button>
+            </div>
+
+            <!-- Quick Trade Card -->
+            <div class="terminal-card">
+                <h5><i class="fas fa-bolt"></i> Quick Trade</h5>
+                <select class="amount-selector" id="quick-trade-amount">
+                    <option value="0.001" id="quickTradeOption0">0.001 BTC (<span id="quickTradeEstimate0">~$45</span>)</option>
+                    <option value="0.01" selected id="quickTradeOption1">0.01 BTC (<span id="quickTradeEstimate1">~$450</span>)</option>
+                    <option value="0.1" id="quickTradeOption2">0.1 BTC (<span id="quickTradeEstimate2">~$4,500</span>)</option>
+                </select>
+                <div class="d-grid gap-2">
+                    <button class="btn-trade-buy" onclick="quickBuy()">
+                        <i class="fas fa-arrow-up"></i> BUY
+                    </button>
+                    <button class="btn-trade-sell" onclick="quickSell()">
+                        <i class="fas fa-arrow-down"></i> SELL
+                    </button>
+                </div>
+                <div class="text-center mt-2">
+                    <small class="text-muted">Estimated: <span id="quick-trade-value">$450.00</span></small>
+                </div>
+            </div>
+
+            <!-- AI Advisor Card -->
+            <div class="terminal-card">
+                <h5><i class="fas fa-robot"></i> AI Co-Pilot</h5>
+                <label class="form-label text-muted">AI Mode</label>
+                <select class="amount-selector" id="aiMode">
+                    <option value="opinion">Opinion Only</option>
+                    <option value="suggest">Suggest Trades</option>
+                    <option value="copilot">Co-Pilot Mode</option>
+                </select>
+                <div class="ai-message-box" id="ai-message">
+                    <small class="text-muted">AI initializing...</small>
+                </div>
+                <div>
+                    <small class="text-muted">Confidence</small>
+                    <div class="confidence-bar" style="display: none;">
+                        <div class="confidence-fill" id="ai-confidence" style="width: 0%;"></div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <input type="text" class="amount-selector" id="aiQuestion" 
+                           placeholder="Ask AI a question..." style="margin-bottom: 10px;">
+                    <button class="btn btn-outline-light btn-sm w-100" id="askAI">
+                        <i class="fas fa-comments"></i> Ask AI
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Column -->
+        <div class="col-md-6">
+            <!-- Chart Card -->
+            <div class="terminal-card">
+                <h5><i class="fas fa-chart-candlestick"></i> Price Chart</h5>
+                <div class="btn-group mb-3" role="group">
+                    <button type="button" class="btn btn-sm btn-outline-secondary timeframe-btn" data-timeframe="1m">1M</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary timeframe-btn" data-timeframe="5m">5M</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary timeframe-btn active" data-timeframe="1h">1H</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary timeframe-btn" data-timeframe="4h">4H</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary timeframe-btn" data-timeframe="1d">1D</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary timeframe-btn" data-timeframe="1w">1W</button>
+                </div>
+                <div id="tradingChart" style="height: 500px; background: #0f172a; border-radius: 8px;"></div>
+            </div>
+
+            
+        </div>
+
+        <!-- Right Sidebar -->
+        <div class="col-md-3">
+            <!-- Manual Trading Panel -->
+            <div class="terminal-card">
+                <h5><i class="fas fa-exchange-alt"></i> Manual Trading</h5>
+                
+                <div class="balance-display mb-3">
+                    <div class="balance-label">Available Balance</div>
+                    <div class="balance-value" id="available-usdt-balance">$950.00 USDT</div>
+                </div>
+
+                <label class="form-label text-muted">Amount (BTC)</label>
+                <input type="number" class="amount-selector" id="manual-amount" 
+                       placeholder="0.01" step="0.001" min="0.001" max="1.0" value="0.01">
+                
+                <div class="info-row">
+                    <span class="info-label">Estimated Value</span>
+                    <span class="info-value" id="manual-estimated-value">$450.00</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Trading Fee (0.1%)</span>
+                    <span class="info-value" id="manual-fee">$0.45</span>
+                </div>
+                
+                <div class="risk-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Max recommended trade: 0.5 BTC
+                </div>
+
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="confirm-risks">
+                    <label class="form-check-label text-muted" for="confirm-risks">
+                        I understand the risks
+                    </label>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button class="btn-trade-buy" id="manual-buy-btn" disabled>
+                        <i class="fas fa-arrow-up"></i> BUY
+                    </button>
+                    <button class="btn-trade-sell" id="manual-sell-btn" disabled>
+                        <i class="fas fa-arrow-down"></i> SELL
+                    </button>
+                </div>
+            </div>
+
+            <!-- Order History -->
+            <div class="terminal-card">
+                <h5><i class="fas fa-history"></i> Order History</h5>
+                <div class="table-responsive">
+                    <table class="table table-dark order-history-table">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>P&L</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orderHistoryBody">
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">
+                                    <em>Loading trade history...</em>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <a href="{% url 'trades' %}" class="btn btn-outline-light btn-sm w-100">
+                    <i class="fas fa-list"></i> View All Orders
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize portfolio pie chart
+const portfolioCtx = document.getElementById('portfolioChart').getContext('2d');
+const portfolioChart = new Chart(portfolioCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['BTC', 'USDT'],
+        datasets: [{
+            data: [4500, 950],
+            backgroundColor: ['#f7931a', '#26a17b'],
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
+    }
+});
+
+// Global trading chart instance
+let tradingChart = null;
+
+// Trading Functions
+function quickBuy() {
+    const amount = document.getElementById('quick-trade-amount').value;
+    if (confirm(`Confirm BUY ${amount} BTC?`)) {
+        console.log('Quick BUY:', amount);
+        showNotification('Trade Executed', `BUY ${amount} BTC`, 'success');
+    }
+}
+
+function quickSell() {
+    if (confirm('Confirm SELL entire position?')) {
+        console.log('Quick SELL position');
+        showNotification('Trade Executed', 'SELL position', 'info');
+    }
+}
+
+function manualBuy() {
+    const amount = document.getElementById('manual-amount').value;
+    if (confirm(`Confirm MANUAL BUY ${amount} BTC?`)) {
+        console.log('Manual BUY:', amount);
+        showNotification('Trade Executed', `BUY ${amount} BTC`, 'success');
+    }
+}
+
+function manualSell() {
+    const amount = document.getElementById('manual-amount').value;
+    if (confirm(`Confirm MANUAL SELL ${amount} BTC?`)) {
+        console.log('Manual SELL:', amount);
+        showNotification('Trade Executed', `SELL ${amount} BTC`, 'info');
+    }
+}
+
+function marketSell() {
+    if (confirm('Confirm MARKET SELL and take profit?')) {
+        console.log('Market SELL');
+        showNotification('Trade Executed', 'Market SELL executed', 'success');
+    }
+}
+
+function holdPosition() {
+    console.log('Holding position');
+    showNotification('Position Held', 'Continuing to hold position', 'info');
+}
+
+function toggleBot() {
+    const indicator = document.getElementById('bot-status-indicator');
+    const button = document.getElementById('bot-toggle-btn');
+    
+    if (indicator.classList.contains('active')) {
+        indicator.classList.remove('active');
+        indicator.classList.add('inactive');
+        button.innerHTML = '<i class="fas fa-play"></i> Resume Bot';
+        showNotification('Bot Paused', 'Trading bot has been paused', 'warning');
+    } else {
+        indicator.classList.remove('inactive');
+        indicator.classList.add('active');
+        button.innerHTML = '<i class="fas fa-pause"></i> Pause Bot';
+        showNotification('Bot Resumed', 'Trading bot is now active', 'success');
+    }
+}
+
+function setTimeframe(timeframe) {
+    // Remove active class from all buttons
+    document.querySelectorAll('.timeframe-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    // Add active class to clicked button
+    event.target.classList.add('active');
+    
+    // Update chart with new timeframe
+    if (tradingChart) {
+        tradingChart.setTimeframe(timeframe);
+        console.log('Timeframe changed to:', timeframe);
+    }
+}
+
+// askAI() now handled by AICoPilot instance
+
+// Enable/disable manual trading buttons based on risk confirmation
+document.getElementById('confirm-risks').addEventListener('change', function() {
+    const buyBtn = document.getElementById('manual-buy-btn');
+    const sellBtn = document.getElementById('manual-sell-btn');
+    buyBtn.disabled = !this.checked;
+    sellBtn.disabled = !this.checked;
+});
+
+// ManualTrading handles estimated value/fee updates
+
+// Update header timestamp
+function updateTimestamp() {
+    const now = new Date();
+    document.getElementById('header-timestamp').textContent = now.toLocaleTimeString();
+}
+setInterval(updateTimestamp, 1000);
+updateTimestamp();
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Trading Terminal Component Libraries -->
+<script src="{% static 'js/trading-chart.js' %}"></script>
+<script src="{% static 'js/pnl-calculator.js' %}"></script>
+<script src="{% static 'js/manual-trading.js' %}"></script>
+<script src="{% static 'js/ai-copilot.js' %}"></script>
+
+<!-- Terminal Initialization Orchestrator -->
+<script src="{% static 'js/terminal-init.js' %}"></script>
+
+<!-- Note: terminal-init.js automatically initializes all components on DOMContentLoaded -->
+<!-- Access components via: TerminalInit.chart, TerminalInit.pnlCalc, etc. -->
+{% endblock %}
