@@ -175,7 +175,7 @@ class TradingChart {
 
             console.log('📌 Tooltip element created and appended');
 
-            // Subscribe to crosshair move with improved error handling
+            // Subscribe to crosshair move events to update tooltip
             this.chart.subscribeCrosshairMove((param) => {
                 try {
                     // Check if crosshair is over a valid point
@@ -190,35 +190,32 @@ class TradingChart {
                         return;
                     }
 
-                    // CRITICAL FIX: Get candle data with proper error handling
+                    // CRITICAL FIX: For Lightweight Charts v3.8.0, use Map access
                     let candleData = null;
                     
-                    // Try multiple ways to get the data (different Lightweight Charts versions)
-                    if (param.seriesData) {
-                        if (typeof param.seriesData.get === 'function') {
+                    if (param.seriesData && this.candleSeries) {
+                        // v3.8.0 uses Map, so check if it's a Map first
+                        if (param.seriesData instanceof Map) {
                             candleData = param.seriesData.get(this.candleSeries);
-                        } else if (param.seriesData.has && param.seriesData.has(this.candleSeries)) {
+                            console.log('📊 Got candle data from Map:', candleData);
+                        } 
+                        // Fallback for other versions
+                        else if (typeof param.seriesData.get === 'function') {
                             candleData = param.seriesData.get(this.candleSeries);
+                            console.log('📊 Got candle data from .get():', candleData);
                         }
-                    }
-
-                    // If no candle data found, try alternative method
-                    if (!candleData && this.candleSeries && typeof this.candleSeries.dataByIndex === 'function') {
-                        const index = Math.round(param.logical);
-                        candleData = this.candleSeries.dataByIndex(index);
                     }
 
                     // If still no data, hide tooltip
                     if (!candleData || !candleData.open) {
-                        tooltip.style.display = 'none';
                         console.log('⚠️ No candle data at this point');
+                        tooltip.style.display = 'none';
                         return;
                     }
 
                     // Format timestamp with proper timezone
                     let dateStr = 'Unknown Time';
                     try {
-                        // Convert Unix timestamp to local time
                         const date = new Date(param.time * 1000);
                         dateStr = date.toLocaleString('en-NZ', {
                             timeZone: 'Pacific/Auckland',
@@ -227,6 +224,7 @@ class TradingChart {
                             day: 'numeric',
                             hour: '2-digit',
                             minute: '2-digit',
+                            second: '2-digit',
                             hour12: false
                         });
                     } catch (e) {
@@ -241,8 +239,8 @@ class TradingChart {
 
                     // Format volume if available
                     let volumeHtml = '';
-                    if (candleData.volume !== undefined) {
-                        const volumeStr = Number(candleData.volume).toLocaleString('en-US', {
+                    if (candleData.value !== undefined) {
+                        const volumeStr = Number(candleData.value).toLocaleString('en-US', {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2
                         });
@@ -285,7 +283,7 @@ class TradingChart {
 
                     // Position tooltip near cursor but keep within bounds
                     const tooltipWidth = 220;
-                    const tooltipHeight = 180;
+                    const tooltipHeight = 200;
                     const padding = 15;
                     
                     let left = param.point.x + padding;
@@ -306,8 +304,6 @@ class TradingChart {
                     tooltip.style.display = 'block';
                     tooltip.style.left = left + 'px';
                     tooltip.style.top = top + 'px';
-
-                    console.log('✅ Tooltip displayed for candle:', candleData);
 
                 } catch (error) {
                     console.error('❌ Tooltip error:', error);
