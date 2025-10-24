@@ -391,22 +391,24 @@
             <!-- Position Card -->
             <div class="terminal-card">
                 <h5><i class="fas fa-chart-line"></i> Current Position</h5>
-                <div class="info-row">
-                    <span class="info-label">Entry Price</span>
-                    <span class="info-value" id="entry-price">$44,000.00</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Current Price</span>
-                    <span class="info-value" id="current-position-price">$45,000.00</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Unrealized P&L</span>
-                    <span class="info-value pnl-positive" id="unrealized-pnl">+$100.00 (+2.27%)</span>
-                </div>
-                
-                <div class="if-sold-now">
-                    <div class="label">If Sold Now</div>
-                    <div class="value" id="if-sold-value">$4,600.00</div>
+                <div id="pnlContainer">
+                    <div class="info-row">
+                        <span class="info-label">Entry Price</span>
+                        <span class="info-value" id="entry-price">$44,000.00</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Current Price</span>
+                        <span class="info-value" id="current-position-price">$45,000.00</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Unrealized P&L</span>
+                        <span class="info-value pnl-positive" id="unrealized-pnl">+$100.00 (+2.27%)</span>
+                    </div>
+                    
+                    <div class="if-sold-now">
+                        <div class="label">If Sold Now</div>
+                        <div class="value" id="if-sold-value">$4,600.00</div>
+                    </div>
                 </div>
                 
                 <button class="btn btn-trade-sell" onclick="quickSell()">

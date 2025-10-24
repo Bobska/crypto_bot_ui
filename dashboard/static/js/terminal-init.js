@@ -97,7 +97,7 @@ const TerminalInit = {
      */
     async fetchPositionData() {
         try {
-            const response = await fetch('/api/position/pnl');
+            const response = await fetch('http://localhost:8002/api/position/pnl');
             
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -196,9 +196,11 @@ const TerminalInit = {
             
             this.aiCopilot = new AICoPilot(savedMode, this.manualTrading);
             
-            // Request initial advice
+            // Request initial advice (non-blocking, let it fail gracefully)
             const context = this.getMarketContext();
-            await this.aiCopilot.requestAdvice(context);
+            this.aiCopilot.requestAdvice(context).catch(err => {
+                console.warn('Initial AI advice failed:', err.message);
+            });
             
             console.log('✅ AI Co-Pilot initialized');
         } catch (error) {
@@ -280,6 +282,11 @@ const TerminalInit = {
                         
                     case 'mode_change':
                         this.handleModeChange(msg.data);
+                        break;
+                        
+                    case 'status':
+                        // Initial status message on connect
+                        this.handleStatusChange(msg.data);
                         break;
                         
                     case 'heartbeat':
@@ -480,7 +487,7 @@ const TerminalInit = {
      */
     async loadGridLevels() {
         try {
-            const response = await fetch('/api/grid/levels');
+            const response = await fetch('http://localhost:8002/api/grid/levels');
             if (!response.ok) return;
             
             const levels = await response.json();

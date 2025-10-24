@@ -166,13 +166,15 @@
 
                 console.log('[AICoPilot] Requesting advice...', { mode: this.currentMode, customQuestion });
 
-                const res = await fetch(`${this.cfg.apiBase}/api/chat`, {
+                const res = await fetch(`${this.cfg.apiBase}/api/ai/advice`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        prompt,
-                        context,
                         mode: this.currentMode,
+                        context: {
+                            ...context,
+                            question: customQuestion
+                        }
                     }),
                 });
 
