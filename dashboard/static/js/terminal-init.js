@@ -297,6 +297,15 @@ const TerminalInit = {
                     connected = true;
                     console.log('✅ WebSocket connected - LIVE UPDATES ENABLED');
                     this.showNotification('Real-time updates connected', 'success');
+                    
+                    // Update connection status indicator
+                    const statusElement = document.querySelector('[data-connection-status]');
+                    if (statusElement) {
+                        statusElement.textContent = '🟢';
+                        statusElement.title = 'Connected';
+                        console.log('✅ Connection status updated to: Connected');
+                    }
+                    
                     this.setupWebSocketHandlers();
                     
                     // CRITICAL: Start ping interval to keep connection alive (25s < 30s server timeout)
@@ -329,6 +338,14 @@ const TerminalInit = {
                         console.log('🛑 Ping interval cleared');
                     }
                     
+                    // Update connection status indicator
+                    const statusElement = document.querySelector('[data-connection-status]');
+                    if (statusElement) {
+                        statusElement.textContent = '🔴';
+                        statusElement.title = 'Disconnected';
+                        console.log('🔴 Connection status updated to: Disconnected');
+                    }
+                    
                     // Update header to show disconnected
                     const priceEl = document.getElementById('header-price');
                     if (priceEl) {
@@ -339,6 +356,14 @@ const TerminalInit = {
                     // Always try to reconnect
                     if (!this.reconnecting) {
                         this.reconnecting = true;
+                        
+                        // Update status to reconnecting
+                        if (statusElement) {
+                            statusElement.textContent = '🟡';
+                            statusElement.title = 'Reconnecting...';
+                            console.log('🟡 Connection status updated to: Reconnecting');
+                        }
+                        
                         setTimeout(() => {
                             this.reconnecting = false;
                             this.connectWebSocket().catch(err => {

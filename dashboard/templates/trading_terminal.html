@@ -326,6 +326,31 @@
         color: #f3f4f6;
         font-weight: 500;
     }
+    
+    /* Connection Status Indicator */
+    [data-connection-status] {
+        display: inline-block;
+        transition: all 0.3s ease;
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    [data-connection-status][title*="Connected"] {
+        animation: none;
+    }
+
+    [data-connection-status][title*="Disconnected"] {
+        animation: pulse-red 1s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    @keyframes pulse-red {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.7; transform: scale(1.1); }
+    }
 </style>
 {% endblock %}
 
@@ -338,6 +363,11 @@
                 <span class="symbol-badge">
                     <i class="fab fa-bitcoin"></i> BTC/USDT
                 </span>
+                <span 
+                    id="connection-status" 
+                    data-connection-status 
+                    title="Connecting..." 
+                    style="font-size: 1.2em; margin: 0 8px; display: inline-block;">🟡</span>
                 <span class="price-display" id="header-price">$45,000.00</span>
                 <span class="price-change positive" id="header-change">
                     <i class="fas fa-arrow-up"></i> +2.5%
