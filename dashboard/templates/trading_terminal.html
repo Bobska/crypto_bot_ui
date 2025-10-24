@@ -765,121 +765,15 @@ updateTimestamp();
 {% endblock %}
 
 {% block extra_js %}
-<!-- Trading Chart Library -->
+<!-- Trading Terminal Component Libraries -->
 <script src="{% static 'js/trading-chart.js' %}"></script>
-<!-- PnL Calculator Library -->
 <script src="{% static 'js/pnl-calculator.js' %}"></script>
-<!-- Manual Trading Library -->
 <script src="{% static 'js/manual-trading.js' %}"></script>
-<!-- AI Co-Pilot Library -->
 <script src="{% static 'js/ai-copilot.js' %}"></script>
 
-<script>
-// Initialize TradingChart, ManualTrading, and AICoPilot after libraries are loaded
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Initializing TradingChart...');
-    
-    // Check if LightweightCharts is available
-    if (typeof LightweightCharts === 'undefined') {
-        console.error('LightweightCharts library not loaded!');
-        return;
-    }
-    
-    // Initialize trading chart
-    tradingChart = new TradingChart('tradingChart');
-    
-    if (tradingChart && tradingChart.chart) {
-        // Load initial historical data
-        tradingChart.loadHistoricalData('BTC/USDT', '1D');
-        
-        // Add sample grid lines (will be replaced with real bot strategy levels)
-        tradingChart.addGridLines(44000, 46000);
-        
-        // Initialize PnL Calculator from DOM values
-        try {
-            const entryText = document.getElementById('entry-price')?.textContent || '0';
-            const currentText = document.getElementById('current-position-price')?.textContent || '0';
-            const amountText = '0.10'; // TODO: wire actual amount from state/UI
-            const parseMoney = (t) => Number(String(t).replace(/[^0-9.\-]/g, '')) || 0;
-            const pnlCalc = new PnLCalculator({
-                entryPrice: parseMoney(entryText),
-                currentPrice: parseMoney(currentText),
-                amount: Number(amountText),
-                position: 'BTC',
-            });
-            // Initial render
-            pnlCalc.renderToDOM({
-                unrealizedId: '#unrealized-pnl',
-                ifSoldId: '#if-sold-value',
-                entryId: '#entry-price',
-                currentId: '#current-position-price',
-            });
-            // Subscribe to live price updates if websocket available
-            if (typeof websocket !== 'undefined' && websocket) {
-                pnlCalc.subscribeToWebSocket(websocket);
-            }
-            // Expose for debugging
-            window.__pnlCalc = pnlCalc;
-        } catch (e) {
-            console.warn('PnLCalculator init skipped or failed:', e);
-        }
-        
-        // Subscribe to WebSocket if available
-        if (typeof websocket !== 'undefined' && websocket) {
-            tradingChart.subscribeToWebSocket(websocket);
-            console.log('Trading chart subscribed to WebSocket');
-        }
-        
-        console.log('TradingChart initialized successfully');
-    } else {
-        console.error('Failed to initialize TradingChart');
-    }
+<!-- Terminal Initialization Orchestrator -->
+<script src="{% static 'js/terminal-init.js' %}"></script>
 
-    // Initialize ManualTrading
-    try {
-        window.__manualTrading = new ManualTrading({
-            feeRate: 0.001,
-            maxTradeSize: 0.5,
-            minTradeSize: 0.001,
-            apiBase: 'http://localhost:8002',
-            selectors: {
-                amount: '#manual-amount',
-                buyButton: '#manual-buy-btn',
-                sellButton: '#manual-sell-btn',
-                estimated: '#manual-estimated-value',
-                fee: '#manual-fee',
-                availableUSDT: '#available-usdt-balance',
-                availableBTC: '#portfolio-btc'
-            }
-        });
-        console.log('ManualTrading initialized');
-    } catch (e) {
-        console.error('ManualTrading init failed:', e);
-    }
-
-    // Initialize AICoPilot
-    try {
-        window.__aiCoPilot = new AICoPilot({
-            mode: 'opinion',
-            apiBase: 'http://localhost:8002',
-            selectors: {
-                modeSelect: '#aiMode',
-                adviceBox: '#ai-message',
-                confidenceBar: '#ai-confidence',
-                askButton: '#askAI',
-                questionInput: '#aiQuestion'
-            }
-        });
-        console.log('AICoPilot initialized');
-
-        // Subscribe to WebSocket if available
-        if (typeof websocket !== 'undefined' && websocket) {
-            window.__aiCoPilot.subscribeToWebSocket(websocket);
-            console.log('AICoPilot subscribed to WebSocket');
-        }
-    } catch (e) {
-        console.error('AICoPilot init failed:', e);
-    }
-});
-</script>
+<!-- Note: terminal-init.js automatically initializes all components on DOMContentLoaded -->
+<!-- Access components via: TerminalInit.chart, TerminalInit.pnlCalc, etc. -->
 {% endblock %}
