@@ -64,7 +64,7 @@ const TerminalInit = {
     },
     
     /**
-     * Initialize TradingChart component
+     * Initialize TradingChart component - LIVE DATA ONLY
      */
     async initChart() {
         try {
@@ -79,25 +79,33 @@ const TerminalInit = {
             
             this.chart = new TradingChart('tradingChart');
             
-            // Load historical data
+            // Load historical data - will show empty chart if API fails
             const symbol = 'BTC/USDT';
             const timeframe = localStorage.getItem('chartTimeframe') || '1h';
             
-            await this.chart.loadHistoricalData(symbol, timeframe);
+            try {
+                await this.chart.loadHistoricalData(symbol, timeframe);
+                console.log('✅ Chart initialized with LIVE data');
+            } catch (error) {
+                console.error('❌ Failed to load chart data from API:', error);
+                this.showNotification('Chart data unavailable - Bot API not responding', 'error');
+                // Chart will be empty - no fallback data
+            }
             
-            console.log('✅ Chart initialized');
         } catch (error) {
-            console.error('Chart initialization error:', error);
+            console.error('❌ Chart initialization error:', error);
             throw new Error('Chart init failed: ' + error.message);
         }
     },
     
     /**
-     * Fetch current position and balance data
+     * Fetch current position and balance data - LIVE DATA ONLY
      */
     async fetchPositionData() {
         try {
-            const response = await fetch('http://localhost:8002/api/position/pnl');
+            const response = await fetch('http://localhost:8002/api/position/pnl', {
+                signal: AbortSignal.timeout(5000) // 5 second timeout
+            });
             
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -106,10 +114,17 @@ const TerminalInit = {
             this.position = await response.json();
             this.currentPrice = this.position.current_price || 0;
             
-            console.log('✅ Position data loaded:', this.position);
+            console.log('✅ Position data loaded (LIVE):', this.position);
+            
+            // Show static data indicator until WebSocket updates
+            const priceEl = document.getElementById('currentPrice');
+            if (priceEl && this.currentPrice > 0) {
+                priceEl.textContent = '⚪ ' + this.formatCurrency(this.currentPrice) + ' STATIC';
+                priceEl.style.color = '#666';
+            }
         } catch (error) {
-            console.error('Position fetch error:', error);
-            // Use fallback data
+            console.error('❌ Position fetch error:', error);
+            // NO FALLBACK - Show empty/zero to indicate data is not live
             this.position = {
                 has_position: false,
                 amount: 0,
@@ -118,7 +133,8 @@ const TerminalInit = {
                 unrealized_pnl: 0,
                 unrealized_pnl_pct: 0
             };
-            console.warn('⚠️ Using fallback position data');
+            console.error('❌ API NOT RESPONDING - Showing zero values');
+            this.showNotification('Bot API not responding - check if server is running', 'error');
         }
     },
     
@@ -137,16 +153,21 @@ const TerminalInit = {
                 throw new Error('PnLCalculator class not loaded');
             }
             
+            // Only use actual position data - no fallbacks
             this.pnlCalc = new PnLCalculator(
-                this.position.amount || 0.1,
-                this.position.entry_price || this.currentPrice,
+                this.position.amount,
+                this.position.entry_price,
                 this.currentPrice
             );
             
             // Render to DOM
             this.pnlCalc.renderToDOM('pnlContainer');
             
-            console.log('✅ P&L Calculator initialized');
+            if (this.position.has_position) {
+                console.log('✅ P&L Calculator initialized with LIVE position');
+            } else {
+                console.warn('⚠️ P&L Calculator initialized - NO ACTIVE POSITION');
+            }
         } catch (error) {
             console.error('P&L Calculator error:', error);
             throw new Error('PnL Calculator init failed: ' + error.message);
@@ -224,7 +245,8 @@ const TerminalInit = {
                 
                 this.ws.onopen = () => {
                     connected = true;
-                    console.log('✅ WebSocket connected');
+                    console.log('✅ WebSocket connected - LIVE UPDATES ENABLED');
+                    this.showNotification('Real-time updates connected', 'success');
                     this.setupWebSocketHandlers();
                     resolve();
                 };
@@ -308,11 +330,13 @@ const TerminalInit = {
     },
     
     /**
-     * Handle price update from WebSocket
+     * Handle price update from WebSocket - LIVE DATA ONLY
      */
     handlePriceUpdate(data) {
         const price = data.price;
         this.currentPrice = price;
+        
+        console.log(`💹 LIVE Price Update: $${price.toFixed(2)}`);
         
         // Update chart
         if (this.chart) {
@@ -522,14 +546,16 @@ const TerminalInit = {
     },
     
     /**
-     * Update header price display
+     * Update header price display - LIVE DATA INDICATOR
      */
     updateHeaderPrice(price, change) {
         const priceEl = document.getElementById('currentPrice');
         const changeEl = document.getElementById('priceChange');
         
         if (priceEl) {
-            priceEl.textContent = this.formatCurrency(price);
+            // Show LIVE indicator
+            priceEl.textContent = '🔴 ' + this.formatCurrency(price) + ' LIVE';
+            priceEl.style.fontWeight = 'bold';
             
             // Add flash animation
             priceEl.classList.remove('price-flash-up', 'price-flash-down');
@@ -546,6 +572,9 @@ const TerminalInit = {
             changeEl.textContent = this.formatPercent(change);
             changeEl.className = 'price-change ' + (change >= 0 ? 'positive' : 'negative');
         }
+        
+        // Update timestamp to show it's live
+        this.updateTimestamp();
     },
     
     /**
