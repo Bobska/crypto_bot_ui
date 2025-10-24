@@ -2,11 +2,12 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.db.models import Q, Sum, Avg, Count, Max, Min
 from django.utils import timezone
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.core.paginator import Paginator
 from datetime import datetime, timedelta
 from decimal import Decimal
 from .api_client import BotAPIClient
+import csv
 from .models import Trade, BotSettings
 import os
 import re
@@ -117,6 +118,47 @@ def order_history_view(request):
     
     # Order by timestamp descending
     trades_qs = trades_qs.order_by('-timestamp')
+
+    # CSV export of all filtered trades
+    if request.GET.get('export') == 'csv':
+        response = HttpResponse(content_type='text/csv')
+        filename_parts = [
+            'order_history',
+            (from_date or 'start'),
+            (to_date or 'end'),
+            (trade_type or 'ALL').lower() if trade_type else 'all',
+            (result or 'ALL').lower() if result else 'all',
+            (symbol or 'all').replace('/', '-')
+        ]
+        response['Content-Disposition'] = f"attachment; filename={'_'.join(filename_parts)}.csv"
+        writer = csv.writer(response)
+        writer.writerow([
+            'ID', 'Timestamp', 'Symbol', 'Type', 'Entry Price', 'Exit Price', 'Amount', 'Fee Paid',
+            'Duration (min)', 'Net PnL ($)', 'ROI (%)', 'Status', 'Result', 'Notes'
+        ])
+        for t in trades_qs:
+            try:
+                roi = t.calculate_roi()
+            except Exception:
+                roi = None
+            status = getattr(t, 'status', 'UNKNOWN')
+            writer.writerow([
+                getattr(t, 'id', ''),
+                t.timestamp.strftime('%Y-%m-%d %H:%M:%S') if getattr(t, 'timestamp', None) else '',
+                getattr(t, 'symbol', ''),
+                getattr(t, 'action', ''),
+                getattr(t, 'entry_price', ''),
+                getattr(t, 'exit_price', ''),
+                getattr(t, 'amount', ''),
+                getattr(t, 'fee_paid', ''),
+                getattr(t, 'duration_minutes', ''),
+                getattr(t, 'net_pnl', ''),
+                round(roi, 4) if roi is not None else '',
+                status,
+                getattr(t, 'result', ''),
+                (getattr(t, 'notes', '') or '').replace('\n', ' ').strip(),
+            ])
+        return response
     
     # Calculate summary statistics
     total_trades = trades_qs.count()
@@ -152,6 +194,10 @@ def order_history_view(request):
         summary_stats['best_trade'] = best
         summary_stats['worst_trade'] = worst
     
+    # Top 5 best/worst from current filters
+    best_trades = list(trades_qs.filter(net_pnl__isnull=False).order_by('-net_pnl')[:5])
+    worst_trades = list(trades_qs.filter(net_pnl__isnull=False).order_by('net_pnl')[:5])
+
     # Paginate trades (50 per page)
     paginator = Paginator(trades_qs, 50)
     page_number = request.GET.get('page', 1)
@@ -167,6 +213,8 @@ def order_history_view(request):
             'result': result,
             'symbol': symbol,
         },
+        'best_trades': best_trades,
+        'worst_trades': worst_trades,
         'page_title': 'Order History',
     }
     
