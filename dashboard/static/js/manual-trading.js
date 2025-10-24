@@ -282,7 +282,8 @@
 
         updateTradeValue() {
             const amt = Number(this.elAmount && this.elAmount.value) || 0;
-            const price = this.getCurrentPrice();
+            // Use TerminalInit's current price if available for better accuracy
+            const price = (window.TerminalInit && window.TerminalInit.currentPrice) || this.getCurrentPrice();
             const { value, fee } = this.calculateTradeValue('BUY', amt, price);
             if (this.elEstimated) this.elEstimated.textContent = this.formatMoney(value);
             if (this.elFee) this.elFee.textContent = this.formatMoney(fee);

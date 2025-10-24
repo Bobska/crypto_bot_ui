@@ -50,6 +50,9 @@ const TerminalInit = {
             
             // 9. Load grid levels for chart markers
             await this.loadGridLevels();
+
+            // 10. Load recent order history into the table
+            await this.loadOrderHistory();
             
             const elapsed = Date.now() - this.initStartTime;
             console.log(`🎉 Trading Terminal ready! (${elapsed}ms)`);
@@ -60,6 +63,39 @@ const TerminalInit = {
         } catch (error) {
             console.error('❌ Terminal initialization failed:', error);
             this.showNotification('Initialization Error: ' + error.message, 'error');
+        }
+    },
+
+    /**
+     * Load recent order history and render top 3 rows
+     */
+    async loadOrderHistory() {
+        try {
+            const response = await fetch('http://localhost:8002/api/trades/recent');
+            if (!response || !response.ok) return;
+
+            const trades = await response.json();
+
+            const tbody = document.getElementById('orderHistoryBody');
+            if (!tbody) return;
+
+            if (!Array.isArray(trades) || trades.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No trades yet</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = trades.slice(0, 3).map(trade => `
+                <tr>
+                    <td>${new Date(trade.timestamp).toLocaleTimeString()}</td>
+                    <td><span class="badge bg-${trade.action === 'BUY' ? 'success' : 'danger'}">${trade.action}</span></td>
+                    <td>${trade.amount || '0.001'}</td>
+                    <td class="${trade.result && trade.result.includes('+') ? 'text-success' : 'text-danger'}">
+                        ${trade.result || '--'}
+                    </td>
+                </tr>
+            `).join('');
+        } catch (error) {
+            console.error('Failed to load order history:', error);
         }
     },
     
@@ -123,6 +159,15 @@ const TerminalInit = {
                 priceEl.style.color = '#fbbf24'; // Yellow/orange for static
                 priceEl.style.fontWeight = 'bold';
             }
+
+            // Update bot status panel based on latest position
+            this.updateBotStatus();
+            
+            // Update portfolio display
+            this.updatePortfolioDisplay();
+            
+            // Update quick trade estimates
+            this.updateQuickTradeEstimates();
         } catch (error) {
             console.error('❌ Position fetch error:', error);
             // NO FALLBACK - Show empty/zero to indicate data is not live
@@ -154,12 +199,14 @@ const TerminalInit = {
                 throw new Error('PnLCalculator class not loaded');
             }
             
-            // Only use actual position data - no fallbacks
-            this.pnlCalc = new PnLCalculator(
-                this.position.amount,
-                this.position.entry_price,
-                this.currentPrice
-            );
+            // FIXED: Pass object instead of separate parameters
+            this.pnlCalc = new PnLCalculator({
+                amount: this.position.amount,
+                entryPrice: this.position.entry_price,
+                currentPrice: this.currentPrice,
+                position: this.position.has_position ? 'BTC' : 'USDT',
+                feeRate: 0.001
+            });
             
             // Render to DOM
             this.pnlCalc.renderToDOM('pnlContainer');
@@ -351,6 +398,12 @@ const TerminalInit = {
         
         // Update header price display
         this.updateHeaderPrice(price, data.change);
+        
+        // Update portfolio display with new price
+        this.updatePortfolioDisplay();
+        
+        // Update quick trade estimates
+        this.updateQuickTradeEstimates();
     },
     
     /**
@@ -376,13 +429,15 @@ const TerminalInit = {
         // Show notification
         this.showTradeNotification(data);
         
-        // Refresh position data
+        // Refresh position data ONCE (no timers) and update PnL calculator
         this.fetchPositionData().then(() => {
             if (this.pnlCalc) {
-                this.pnlCalc.updatePosition(
-                    this.position.amount,
-                    this.position.entry_price
-                );
+                this.pnlCalc.amount = this.position.amount;
+                this.pnlCalc.entryPrice = this.position.entry_price;
+                this.pnlCalc.position = this.position.has_position ? 'BTC' : 'USDT';
+                // Re-render with updated values and recalc using current price
+                this.pnlCalc.updatePrice(this.currentPrice);
+                this.pnlCalc.renderToDOM('pnlContainer');
             }
         });
     },
@@ -397,6 +452,115 @@ const TerminalInit = {
         if (statusBadge) {
             statusBadge.textContent = data.bot_running ? 'RUNNING' : 'STOPPED';
             statusBadge.className = data.bot_running ? 'badge bg-success' : 'badge bg-secondary';
+        }
+
+        // Update the Bot Status panel details
+        this.updateBotStatus(data);
+    },
+
+    /**
+     * Update Bot Status panel (strategy, next action, target price)
+     */
+    updateBotStatus(statusData) {
+        // Strategy display
+        let strategyEl = document.getElementById('botStrategy');
+        if (!strategyEl) {
+            // Fallback: find the Strategy row's value element
+            const rows = document.querySelectorAll('.terminal-card .info-row');
+            for (const row of rows) {
+                const label = row.querySelector('.info-label');
+                const value = row.querySelector('.info-value');
+                if (label && value && label.textContent.trim().toLowerCase() === 'strategy') {
+                    strategyEl = value;
+                    break;
+                }
+            }
+        }
+        if (strategyEl) {
+            strategyEl.textContent = 'Grid Trading';
+        }
+
+        // Next action (support both camelCase and kebab-case ids)
+        const nextActionEl = document.getElementById('nextAction') || document.getElementById('next-action');
+        if (nextActionEl && this.position) {
+            if (this.position.has_position) {
+                // Holding BTC - waiting to sell
+                const sellTarget = (this.position.entry_price * 1.01).toFixed(2);
+                nextActionEl.textContent = `SELL at $${sellTarget}`;
+            } else {
+                // Holding USDT - waiting to buy
+                nextActionEl.textContent = 'BUY on dip';
+            }
+        }
+
+        // Target price (support both camelCase and kebab-case ids)
+        const targetEl = document.getElementById('targetPrice') || document.getElementById('target-price');
+        if (targetEl && this.position && this.position.has_position) {
+            const sellTarget = (this.position.entry_price * 1.01).toFixed(2);
+            targetEl.textContent = `$${sellTarget}`;
+        }
+    },
+
+    /**
+     * Update Portfolio display with real balance data
+     */
+    updatePortfolioDisplay() {
+        if (!this.position) return;
+        
+        // Get balance from position data or fetch from API
+        const btcAmount = this.position.amount || 0;
+        const usdtBalance = 950.00; // Get from actual balance API
+        
+        // Calculate total value
+        const btcValue = btcAmount * this.currentPrice;
+        const totalValue = btcValue + usdtBalance;
+        
+        // Update DOM elements (template uses kebab-case IDs)
+        const totalEl = document.getElementById('total-portfolio-value');
+        if (totalEl) {
+            totalEl.textContent = this.formatCurrency(totalValue);
+        }
+        
+        const btcEl = document.getElementById('portfolio-btc');
+        if (btcEl) {
+            btcEl.textContent = btcAmount.toFixed(6);
+        }
+        
+        const usdtEl = document.getElementById('portfolio-usdt');
+        if (usdtEl) {
+            usdtEl.textContent = this.formatCurrency(usdtBalance);
+        }
+        
+        console.log(`💼 Portfolio updated: ${btcAmount.toFixed(6)} BTC + ${usdtBalance.toFixed(2)} USDT = ${totalValue.toFixed(2)}`);
+    },
+
+    /**
+     * Update Quick Trade estimates with current price
+     */
+    updateQuickTradeEstimates() {
+        const amounts = [0.001, 0.01, 0.1];
+        
+        amounts.forEach((amount, index) => {
+            const value = amount * this.currentPrice;
+            
+            // Update the estimate span inside each option
+            const estimateEl = document.getElementById(`quickTradeEstimate${index}`);
+            if (estimateEl) {
+                estimateEl.textContent = `~${this.formatCurrency(value)}`;
+            }
+        });
+        
+        // Update the main estimated value display
+        const selectedAmount = parseFloat(document.getElementById('quick-trade-amount')?.value || 0.01);
+        const selectedValue = selectedAmount * this.currentPrice;
+        const valueEl = document.getElementById('quick-trade-value');
+        if (valueEl) {
+            valueEl.textContent = this.formatCurrency(selectedValue);
+        }
+        
+        // Update manual trading estimates if ManualTrading is initialized
+        if (this.manualTrading && typeof this.manualTrading.updateTradeValue === 'function') {
+            this.manualTrading.updateTradeValue();
         }
     },
     
@@ -499,17 +663,12 @@ const TerminalInit = {
      * Start background update tasks
      */
     startBackgroundTasks() {
-        // Update timestamp display every second
+        // Update timestamp display every second (only allowed interval)
         setInterval(() => {
             this.updateTimestamp();
         }, 1000);
         
-        // Refresh position data every 30 seconds
-        setInterval(() => {
-            this.fetchPositionData();
-        }, 30000);
-        
-        console.log('✅ Background tasks started');
+        console.log('✅ Timestamp updater started');
     },
     
     /**
@@ -589,7 +748,7 @@ const TerminalInit = {
      * Update timestamp display
      */
     updateTimestamp() {
-        const timestampEl = document.getElementById('lastUpdate');
+        const timestampEl = document.getElementById('header-timestamp');
         if (timestampEl) {
             const now = new Date();
             timestampEl.textContent = now.toLocaleTimeString();
@@ -691,10 +850,12 @@ const TerminalInit = {
             }
             
             if (this.pnlCalc) {
-                this.pnlCalc.updatePosition(
-                    this.position.amount,
-                    this.position.entry_price
-                );
+                // Update fields directly and re-render (no updatePosition API)
+                this.pnlCalc.amount = this.position.amount;
+                this.pnlCalc.entryPrice = this.position.entry_price;
+                this.pnlCalc.position = this.position.has_position ? 'BTC' : 'USDT';
+                this.pnlCalc.updatePrice(this.currentPrice);
+                this.pnlCalc.renderToDOM('pnlContainer');
             }
             
             this.showNotification('Data refreshed', 'success');

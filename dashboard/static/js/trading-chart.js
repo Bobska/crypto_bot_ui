@@ -358,29 +358,94 @@ class TradingChart {
     }
 
     /**
-     * Update current price display
-     * @param {number} newPrice - Current price
+     * Update current price and the current candle in real-time
+     * @param {number} price - Current price
      */
-    updatePrice(newPrice) {
-        if (!newPrice) return;
+    updatePrice(price) {
+        if (!this.candleSeries || !price) return;
 
-        // Remove existing current price line
+        const currentTime = Math.floor(Date.now() / 1000);
+
+        // Initialize lastCandle if not present
+        if (!this.lastCandle) {
+            this.lastCandle = {
+                time: currentTime,
+                open: parseFloat(price),
+                high: parseFloat(price),
+                low: parseFloat(price),
+                close: parseFloat(price),
+            };
+        }
+
+        // Determine interval length based on timeframe
+        const timeframe = this.currentTimeframe || '1h';
+        const intervalSeconds = this.getIntervalSeconds(timeframe);
+
+        // Roll to a new candle if interval elapsed
+        if ((currentTime - this.lastCandle.time) >= intervalSeconds) {
+            this.lastCandle = {
+                time: currentTime,
+                open: parseFloat(price),
+                high: parseFloat(price),
+                low: parseFloat(price),
+                close: parseFloat(price),
+            };
+        } else {
+            // Update existing candle
+            const p = parseFloat(price);
+            this.lastCandle.high = Math.max(this.lastCandle.high, p);
+            this.lastCandle.low = Math.min(this.lastCandle.low, p);
+            this.lastCandle.close = p;
+        }
+
+        // Update the chart with the current candle
+        this.candleSeries.update(this.lastCandle);
+
+        // Update (and re-create) a current price line for visibility
         if (this.priceLines.currentPrice) {
             this.candleSeries.removePriceLine(this.priceLines.currentPrice);
         }
-
-        // Add current price line
         this.priceLines.currentPrice = this.candleSeries.createPriceLine({
-            price: parseFloat(newPrice),
+            price: parseFloat(price),
             color: '#3b82f6',
             lineWidth: 2,
             lineStyle: LightweightCharts.LineStyle.Solid,
             axisLabelVisible: true,
-            title: `Current: $${parseFloat(newPrice).toFixed(2)}`,
+            title: `Current: $${parseFloat(price).toFixed(2)}`,
         });
 
         // Flash effect on container
         this.flashContainer();
+
+        console.log(`📊 Chart updated: $${parseFloat(price).toFixed(2)}`);
+    }
+
+    /**
+     * Map timeframe string to seconds
+     * @param {string} timeframe
+     * @returns {number}
+     */
+    getIntervalSeconds(timeframe) {
+        const tf = (timeframe || '').toString().toLowerCase();
+        const intervals = {
+            '1m': 60,
+            '5m': 300,
+            '15m': 900,
+            '30m': 1800,
+            '1h': 3600,
+            '4h': 14400,
+            '1d': 86400,
+            '1w': 604800,
+        };
+        // Also support uppercase formats like '1H','4H','1D','1W'
+        const upper = (timeframe || '').toString().toUpperCase();
+        const upperMap = {
+            '1H': 3600,
+            '4H': 14400,
+            '1D': 86400,
+            '1W': 604800,
+        };
+        return intervals[tf] || upperMap[upper] || 3600;
     }
 
     /**
@@ -419,18 +484,8 @@ class TradingChart {
             if (data.type === 'price_update' && data.data) {
                 const price = data.data.price;
                 if (price) {
+                    // Update price will handle current candle updates
                     this.updatePrice(price);
-                    
-                    // Create candle from price update
-                    const candle = {
-                        time: Math.floor(Date.now() / 1000),
-                        open: price,
-                        high: price,
-                        low: price,
-                        close: price,
-                        volume: 0,
-                    };
-                    this.addRealtimeCandle(candle);
                 }
             }
 

@@ -443,9 +443,9 @@
             <div class="terminal-card">
                 <h5><i class="fas fa-bolt"></i> Quick Trade</h5>
                 <select class="amount-selector" id="quick-trade-amount">
-                    <option value="0.001">0.001 BTC (~$45)</option>
-                    <option value="0.01" selected>0.01 BTC (~$450)</option>
-                    <option value="0.1">0.1 BTC (~$4,500)</option>
+                    <option value="0.001" id="quickTradeOption0">0.001 BTC (<span id="quickTradeEstimate0">~$45</span>)</option>
+                    <option value="0.01" selected id="quickTradeOption1">0.01 BTC (<span id="quickTradeEstimate1">~$450</span>)</option>
+                    <option value="0.1" id="quickTradeOption2">0.1 BTC (<span id="quickTradeEstimate2">~$4,500</span>)</option>
                 </select>
                 <div class="d-grid gap-2">
                     <button class="btn-trade-buy" onclick="quickBuy()">
@@ -493,63 +493,18 @@
             <!-- Chart Card -->
             <div class="terminal-card">
                 <h5><i class="fas fa-chart-candlestick"></i> Price Chart</h5>
-                <div class="timeframe-selector">
-                    <button class="timeframe-btn" onclick="setTimeframe('1H')">1H</button>
-                    <button class="timeframe-btn" onclick="setTimeframe('4H')">4H</button>
-                    <button class="timeframe-btn active" onclick="setTimeframe('1D')">1D</button>
-                    <button class="timeframe-btn" onclick="setTimeframe('1W')">1W</button>
+                <div class="btn-group mb-3" role="group">
+                    <button type="button" class="btn btn-sm btn-outline-secondary timeframe-btn" data-timeframe="1m">1M</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary timeframe-btn" data-timeframe="5m">5M</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary timeframe-btn active" data-timeframe="1h">1H</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary timeframe-btn" data-timeframe="4h">4H</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary timeframe-btn" data-timeframe="1d">1D</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary timeframe-btn" data-timeframe="1w">1W</button>
                 </div>
                 <div id="tradingChart" style="height: 500px; background: #0f172a; border-radius: 8px;"></div>
             </div>
 
-            <!-- Position Calculator Card -->
-            <div class="terminal-card">
-                <h5><i class="fas fa-calculator"></i> Position Calculator</h5>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="info-row">
-                            <span class="info-label">Entry Price</span>
-                            <span class="info-value">$44,000.00</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Current Price</span>
-                            <span class="info-value">$45,000.00</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Amount</span>
-                            <span class="info-value">0.1 BTC</span>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="info-row">
-                            <span class="info-label">Entry Value</span>
-                            <span class="info-value">$4,400.00</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Current Value</span>
-                            <span class="info-value">$4,500.00</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Trading Fees</span>
-                            <span class="info-value">$8.80</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="mt-3 p-3 bg-dark rounded text-center">
-                    <div class="text-muted mb-2">Net Profit / Loss</div>
-                    <div class="display-6 pnl-positive">
-                        +$91.20 <small>(+2.07%)</small>
-                    </div>
-                </div>
-                <div class="d-grid gap-2 mt-3">
-                    <button class="btn-trade-sell" onclick="marketSell()">
-                        <i class="fas fa-hand-holding-usd"></i> Market Sell (Take Profit)
-                    </button>
-                    <button class="btn btn-outline-light" onclick="holdPosition()">
-                        <i class="fas fa-hand-paper"></i> Hold Position
-                    </button>
-                </div>
-            </div>
+            
         </div>
 
         <!-- Right Sidebar -->
@@ -611,24 +566,11 @@
                                 <th>P&L</th>
                             </tr>
                         </thead>
-                        <tbody id="order-history-body">
+                        <tbody id="orderHistoryBody">
                             <tr>
-                                <td>10:30</td>
-                                <td><span class="badge bg-success">BUY</span></td>
-                                <td>0.01</td>
-                                <td class="pnl-positive">+$45</td>
-                            </tr>
-                            <tr>
-                                <td>09:15</td>
-                                <td><span class="badge bg-danger">SELL</span></td>
-                                <td>0.01</td>
-                                <td class="pnl-positive">+$32</td>
-                            </tr>
-                            <tr>
-                                <td>08:00</td>
-                                <td><span class="badge bg-success">BUY</span></td>
-                                <td>0.01</td>
-                                <td class="pnl-negative">-$12</td>
+                                <td colspan="4" class="text-center text-muted">
+                                    <em>Loading trade history...</em>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
