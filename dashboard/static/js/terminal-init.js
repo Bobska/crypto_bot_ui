@@ -220,30 +220,35 @@ const TerminalInit = {
                 console.log('🔌 Connecting to WebSocket:', wsUrl);
                 
                 this.ws = new WebSocket(wsUrl);
+                let connected = false;
                 
                 this.ws.onopen = () => {
+                    connected = true;
                     console.log('✅ WebSocket connected');
                     this.setupWebSocketHandlers();
                     resolve();
                 };
                 
                 this.ws.onerror = (error) => {
-                    console.error('WebSocket error:', error);
+                    console.error('❌ WebSocket error:', error);
                     reject(new Error('WebSocket connection failed'));
                 };
                 
                 this.ws.onclose = () => {
-                    console.warn('⚠️ WebSocket disconnected, attempting reconnect...');
-                    setTimeout(() => this.reconnectWebSocket(), 5000);
+                    if (connected) {
+                        console.warn('⚠️ WebSocket disconnected, reconnecting in 5s...');
+                        setTimeout(() => this.reconnectWebSocket(), 5000);
+                    }
                 };
                 
-                // Timeout if connection takes too long
+                // Timeout if connection takes too long (10 seconds)
                 setTimeout(() => {
-                    if (this.ws.readyState !== WebSocket.OPEN) {
-                        console.warn('⚠️ WebSocket timeout, continuing without real-time updates');
+                    if (!connected && this.ws.readyState !== WebSocket.OPEN) {
+                        console.warn('⚠️ WebSocket connection timeout - continuing without real-time updates');
+                        console.warn('   Make sure the Bot API is running on port 8002');
                         resolve(); // Don't block initialization
                     }
-                }, 3000);
+                }, 10000);
                 
             } catch (error) {
                 console.error('WebSocket setup error:', error);
