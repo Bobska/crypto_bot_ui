@@ -15,6 +15,7 @@ const TerminalInit = {
     currentPrice: 0,
     position: null,
     initStartTime: null,
+    reconnecting: false,
     
     /**
      * Main initialization entry point
@@ -304,10 +305,25 @@ const TerminalInit = {
                     reject(new Error('WebSocket connection failed'));
                 };
                 
-                this.ws.onclose = () => {
-                    if (connected) {
-                        console.warn('⚠️ WebSocket disconnected, reconnecting in 5s...');
-                        setTimeout(() => this.reconnectWebSocket(), 5000);
+                this.ws.onclose = (event) => {
+                    console.warn(`⚠️ WebSocket closed (code: ${event.code})`);
+                    
+                    // Update header to show disconnected
+                    const priceEl = document.getElementById('header-price');
+                    if (priceEl) {
+                        priceEl.textContent = '⚪ Reconnecting...';
+                        priceEl.style.color = '#fbbf24'; // Yellow
+                    }
+                    
+                    // Always try to reconnect
+                    if (!this.reconnecting) {
+                        this.reconnecting = true;
+                        setTimeout(() => {
+                            this.reconnecting = false;
+                            this.connectWebSocket().catch(err => {
+                                console.error('Reconnect failed:', err);
+                            });
+                        }, 3000); // 3 seconds
                     }
                 };
                 
@@ -507,21 +523,33 @@ const TerminalInit = {
     async updatePortfolioDisplay() {
         if (!this.position) return;
         
-        // Fetch actual balance from API
+        const btcAmount = this.position.amount || 0;
+        
+        // Fetch REAL balance with longer timeout and fallback
         let usdtBalance = 950.00; // fallback
+        
         try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+            
             const statusResponse = await fetch('http://localhost:8002/api/status', {
-                signal: AbortSignal.timeout(3000)
+                signal: controller.signal
             });
+            
+            clearTimeout(timeoutId);
+            
             if (statusResponse.ok) {
                 const status = await statusResponse.json();
-                usdtBalance = status.balance?.USDT || 950.00;
+                usdtBalance = status.balance?.USDT || usdtBalance;
             }
         } catch (error) {
-            console.warn('Could not fetch balance:', error.message);
+            // Use cached balance on error - don't log as this is expected during price updates
+            // Only log if it's not a timeout
+            if (error.name !== 'AbortError') {
+                console.warn('Could not fetch balance:', error.message);
+            }
         }
         
-        const btcAmount = this.position.amount || 0;
         const btcValue = btcAmount * this.currentPrice;
         const totalValue = btcValue + usdtBalance;
         
@@ -541,7 +569,10 @@ const TerminalInit = {
             usdtEl.textContent = this.formatCurrency(usdtBalance); // Shows cents
         }
         
-        console.log(`💼 Portfolio updated: ${btcAmount.toFixed(6)} BTC + ${usdtBalance.toFixed(2)} USDT = ${totalValue.toFixed(2)}`);
+        // Only log successful updates, not every price change
+        if (Math.random() < 0.1) { // Log 10% of updates
+            console.log(`💼 Portfolio: ${btcAmount.toFixed(6)} BTC + ${usdtBalance.toFixed(2)} USDT = ${totalValue.toFixed(2)}`);
+        }
     },
 
     /**
@@ -601,9 +632,18 @@ const TerminalInit = {
             return; // Already connected
         }
         
+        if (this.reconnecting) {
+            console.log('⏳ Reconnection already in progress...');
+            return; // Prevent multiple simultaneous reconnection attempts
+        }
+        
         console.log('🔄 Reconnecting WebSocket...');
+        this.reconnecting = true;
+        
         this.connectWebSocket().catch(err => {
             console.error('Reconnect failed:', err);
+        }).finally(() => {
+            this.reconnecting = false;
         });
     },
     
