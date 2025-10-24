@@ -140,9 +140,22 @@ class TradingChart {
             
             // Remove slash from symbol (BTC/USDT -> BTCUSDT) to match Binance format
             const symbolClean = symbol.replace('/', '');
-            
+
+            // Use fewer candles for longer timeframes to stay recent
+            const tfLower = (timeframe || '').toLowerCase();
+            const limits = {
+                '1m': 100,
+                '5m': 100,
+                '15m': 100,
+                '1h': 48,   // ~2 days
+                '4h': 42,   // ~1 week
+                '1d': 30,   // ~1 month
+                '1w': 12    // ~3 months
+            };
+            const limit = limits[tfLower] || 100;
+
             // Fetch from Bot API - ensure it returns LATEST candles
-            const response = await fetch(`http://localhost:8002/api/candles/${symbolClean}/${timeframe}?limit=100`);
+            const response = await fetch(`http://localhost:8002/api/candles/${symbolClean}/${timeframe}?limit=${limit}`);
             
             if (!response.ok) {
                 throw new Error(`API error: ${response.status}`);
