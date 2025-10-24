@@ -302,6 +302,62 @@ class TradingChart {
     }
 
     /**
+     * Add a horizontal line at a specific price
+     * @param {number} price - Price level
+     * @param {string} color - Line color (e.g., 'green', 'red', '#22c55e')
+     * @param {string} label - Label text
+     */
+    addHorizontalLine(price, color, label) {
+        if (!price) {
+            console.warn('Invalid price for horizontal line:', price);
+            return;
+        }
+
+        try {
+            // Convert color names to hex
+            const colorMap = {
+                'green': '#22c55e',
+                'red': '#ef4444',
+                'blue': '#3b82f6',
+                'yellow': '#f59e0b',
+                'orange': '#f97316'
+            };
+            const lineColor = colorMap[color.toLowerCase()] || color;
+
+            // Create price line
+            const priceLine = this.candleSeries.createPriceLine({
+                price: parseFloat(price),
+                color: lineColor,
+                lineWidth: 2,
+                lineStyle: LightweightCharts.LineStyle.Dashed,
+                axisLabelVisible: true,
+                title: label || `$${parseFloat(price).toFixed(2)}`,
+            });
+
+            // Store reference
+            const lineKey = label?.toLowerCase().replace(/\s+/g, '_') || `line_${price}`;
+            this.priceLines[lineKey] = priceLine;
+
+            console.log(`Horizontal line added: ${label} at $${price}`, lineColor);
+            return priceLine;
+        } catch (error) {
+            console.error('Error adding horizontal line:', error);
+        }
+    }
+
+    /**
+     * Remove a horizontal line by key
+     * @param {string} lineKey - Key of the line to remove
+     */
+    removeHorizontalLine(lineKey) {
+        if (this.priceLines[lineKey]) {
+            this.candleSeries.removePriceLine(this.priceLines[lineKey]);
+            delete this.priceLines[lineKey];
+            console.log(`Horizontal line removed: ${lineKey}`);
+        }
+    }
+
+    /**
      * Update current price display
      * @param {number} newPrice - Current price
      */
