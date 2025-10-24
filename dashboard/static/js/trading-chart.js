@@ -190,25 +190,33 @@ class TradingChart {
                         return;
                     }
 
+                    // DEBUG: Log param structure to find hover detection method
+                    if (Math.random() < 0.05) { // Only log 5% of the time to avoid spam
+                        console.log('🔍 Param object:', {
+                            hoveredSeries: param.hoveredSeries,
+                            hoveredObjectId: param.hoveredObjectId,
+                            seriesPrices: param.seriesPrices ? 'exists' : 'missing',
+                            point: param.point,
+                            time: param.time
+                        });
+                    }
+
                     // CRITICAL FIX: Access candle data using seriesPrices()
                     let candleData = null;
 
                     // Method 1: Try seriesPrices() - works with most versions
                     if (param.seriesPrices && param.seriesPrices.has(this.candleSeries)) {
                         candleData = param.seriesPrices.get(this.candleSeries);
-                        console.log('✅ Got data from seriesPrices:', candleData);
                     }
                     
                     // Method 2: Try seriesData Map (v3.8.0+)
                     if (!candleData && param.seriesData && param.seriesData instanceof Map) {
                         candleData = param.seriesData.get(this.candleSeries);
-                        console.log('✅ Got data from seriesData Map:', candleData);
                     }
 
                     // Method 3: Try seriesData.get() function
                     if (!candleData && param.seriesData && typeof param.seriesData.get === 'function') {
                         candleData = param.seriesData.get(this.candleSeries);
-                        console.log('✅ Got data from seriesData.get():', candleData);
                     }
 
                     // Validate candle data exists and has required fields
@@ -217,21 +225,14 @@ class TradingChart {
                         return;
                     }
 
-                    // CRITICAL: Only show tooltip if hovering over actual price data
-                    // Check if cursor Y position is within the candle's high/low range
-                    if (param.point && candleData.high && candleData.low) {
-                        // Convert Y coordinate to price using chart's price scale
-                        const priceScale = this.candleSeries.priceScale();
-                        const price = priceScale.coordinateToPrice(param.point.y);
-                        
-                        // Only show tooltip if cursor is within candle's high/low range
-                        if (price < candleData.low || price > candleData.high) {
-                            tooltip.style.display = 'none';
-                            return;
-                        }
+                    // NEW: Only show tooltip if hovering directly over the candlestick series
+                    // This prevents tooltip showing when hovering in empty column space
+                    if (param.hoveredSeries && param.hoveredSeries !== this.candleSeries) {
+                        tooltip.style.display = 'none';
+                        return;
                     }
 
-                    // SUCCESS - we have candle data AND cursor is over the candle, now build tooltip
+                    // SUCCESS - we have candle data, now build tooltip
 
                     // Format timestamp
                     const date = new Date(param.time * 1000);
