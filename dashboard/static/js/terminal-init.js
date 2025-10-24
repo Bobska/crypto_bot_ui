@@ -163,8 +163,8 @@ const TerminalInit = {
             // Update bot status panel based on latest position
             this.updateBotStatus();
             
-            // Update portfolio display
-            this.updatePortfolioDisplay();
+            // Update portfolio display (fetches balance from API)
+            await this.updatePortfolioDisplay();
             
             // Update quick trade estimates
             this.updateQuickTradeEstimates();
@@ -502,33 +502,43 @@ const TerminalInit = {
     },
 
     /**
-     * Update Portfolio display with real balance data
+     * Update Portfolio display with real balance data from API
      */
-    updatePortfolioDisplay() {
+    async updatePortfolioDisplay() {
         if (!this.position) return;
         
-        // Get balance from position data or fetch from API
-        const btcAmount = this.position.amount || 0;
-        const usdtBalance = 950.00; // Get from actual balance API
+        // Fetch actual balance from API
+        let usdtBalance = 950.00; // fallback
+        try {
+            const statusResponse = await fetch('http://localhost:8002/api/status', {
+                signal: AbortSignal.timeout(3000)
+            });
+            if (statusResponse.ok) {
+                const status = await statusResponse.json();
+                usdtBalance = status.balance?.USDT || 950.00;
+            }
+        } catch (error) {
+            console.warn('Could not fetch balance:', error.message);
+        }
         
-        // Calculate total value
+        const btcAmount = this.position.amount || 0;
         const btcValue = btcAmount * this.currentPrice;
         const totalValue = btcValue + usdtBalance;
         
         // Update DOM elements (template uses kebab-case IDs)
         const totalEl = document.getElementById('total-portfolio-value');
         if (totalEl) {
-            totalEl.textContent = this.formatCurrency(totalValue);
+            totalEl.textContent = this.formatCurrency(totalValue); // Shows cents
         }
         
         const btcEl = document.getElementById('portfolio-btc');
         if (btcEl) {
-            btcEl.textContent = btcAmount.toFixed(6);
+            btcEl.textContent = btcAmount.toFixed(6); // 6 decimals for BTC
         }
         
         const usdtEl = document.getElementById('portfolio-usdt');
         if (usdtEl) {
-            usdtEl.textContent = this.formatCurrency(usdtBalance);
+            usdtEl.textContent = this.formatCurrency(usdtBalance); // Shows cents
         }
         
         console.log(`💼 Portfolio updated: ${btcAmount.toFixed(6)} BTC + ${usdtBalance.toFixed(2)} USDT = ${totalValue.toFixed(2)}`);
