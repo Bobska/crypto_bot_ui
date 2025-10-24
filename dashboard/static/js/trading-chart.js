@@ -72,6 +72,34 @@ class TradingChart {
                     rightOffset: 12,
                     barSpacing: 10,
                 },
+                // Display in browser's local timezone with localized formatting
+                localization: {
+                    locale: (typeof navigator !== 'undefined' && navigator.language) ? navigator.language : 'en-NZ',
+                    timeFormatter: (time) => {
+                        try {
+                            // time can be a UNIX timestamp (seconds) or a BusinessDay-like object
+                            let date;
+                            if (typeof time === 'number') {
+                                date = new Date(time * 1000);
+                            } else if (time && typeof time === 'object') {
+                                // Attempt to construct from {year, month, day}
+                                const y = time.year || time.y || 1970;
+                                const m = (time.month || time.M || 1) - 1;
+                                const d = time.day || time.d || 1;
+                                date = new Date(Date.UTC(y, m, d));
+                            } else {
+                                date = new Date();
+                            }
+                            return date.toLocaleTimeString('en-NZ', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: true,
+                            });
+                        } catch (_) {
+                            return '';
+                        }
+                    },
+                },
                 rightPriceScale: {
                     borderColor: '#485c7b',
                     scaleMargins: {
