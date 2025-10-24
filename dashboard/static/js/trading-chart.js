@@ -138,8 +138,11 @@ class TradingChart {
         try {
             console.log(`📊 Fetching ${symbol} ${timeframe} candles...`);
             
+            // Remove slash from symbol (BTC/USDT -> BTCUSDT) to match Binance format
+            const symbolClean = symbol.replace('/', '');
+            
             // Fetch from Bot API - ensure it returns LATEST candles
-            const response = await fetch(`http://localhost:8002/api/candles/${symbol}/${timeframe}?limit=100`);
+            const response = await fetch(`http://localhost:8002/api/candles/${symbolClean}/${timeframe}?limit=100`);
             
             if (!response.ok) {
                 throw new Error(`API error: ${response.status}`);
