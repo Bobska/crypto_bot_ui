@@ -117,10 +117,11 @@ const TerminalInit = {
             console.log('✅ Position data loaded (LIVE):', this.position);
             
             // Show static data indicator until WebSocket updates
-            const priceEl = document.getElementById('currentPrice');
+            const priceEl = document.getElementById('header-price');
             if (priceEl && this.currentPrice > 0) {
                 priceEl.textContent = '⚪ ' + this.formatCurrency(this.currentPrice) + ' STATIC';
-                priceEl.style.color = '#666';
+                priceEl.style.color = '#fbbf24'; // Yellow/orange for static
+                priceEl.style.fontWeight = 'bold';
             }
         } catch (error) {
             console.error('❌ Position fetch error:', error);
@@ -549,13 +550,16 @@ const TerminalInit = {
      * Update header price display - LIVE DATA INDICATOR
      */
     updateHeaderPrice(price, change) {
-        const priceEl = document.getElementById('currentPrice');
-        const changeEl = document.getElementById('priceChange');
+        // CORRECT IDs for trading terminal
+        const priceEl = document.getElementById('header-price');
+        const changeEl = document.getElementById('header-change');
+        const timestampEl = document.getElementById('header-timestamp');
         
         if (priceEl) {
             // Show LIVE indicator
             priceEl.textContent = '🔴 ' + this.formatCurrency(price) + ' LIVE';
             priceEl.style.fontWeight = 'bold';
+            priceEl.style.color = '#22c55e'; // Green for live
             
             // Add flash animation
             priceEl.classList.remove('price-flash-up', 'price-flash-down');
@@ -569,12 +573,16 @@ const TerminalInit = {
         }
         
         if (changeEl && change !== undefined) {
-            changeEl.textContent = this.formatPercent(change);
+            const icon = change >= 0 ? '<i class="fas fa-arrow-up"></i>' : '<i class="fas fa-arrow-down"></i>';
+            changeEl.innerHTML = icon + ' ' + this.formatPercent(change);
             changeEl.className = 'price-change ' + (change >= 0 ? 'positive' : 'negative');
         }
         
         // Update timestamp to show it's live
-        this.updateTimestamp();
+        if (timestampEl) {
+            const now = new Date();
+            timestampEl.textContent = now.toLocaleTimeString();
+        }
     },
     
     /**
