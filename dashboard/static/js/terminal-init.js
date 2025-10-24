@@ -16,6 +16,7 @@ const TerminalInit = {
     position: null,
     initStartTime: null,
     reconnecting: false,
+    pingInterval: null,
     
     /**
      * Main initialization entry point
@@ -297,6 +298,19 @@ const TerminalInit = {
                     console.log('✅ WebSocket connected - LIVE UPDATES ENABLED');
                     this.showNotification('Real-time updates connected', 'success');
                     this.setupWebSocketHandlers();
+                    
+                    // CRITICAL: Start ping interval to keep connection alive (25s < 30s server timeout)
+                    this.pingInterval = setInterval(() => {
+                        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                            this.ws.send(JSON.stringify({ type: 'ping' }));
+                            console.log('🏓 Ping sent to keep connection alive');
+                        } else {
+                            console.log('⚠️ WebSocket not open, clearing ping interval');
+                            clearInterval(this.pingInterval);
+                            this.pingInterval = null;
+                        }
+                    }, 25000); // Send ping every 25 seconds
+                    
                     resolve();
                 };
                 
@@ -306,7 +320,14 @@ const TerminalInit = {
                 };
                 
                 this.ws.onclose = (event) => {
-                    console.warn(`⚠️ WebSocket closed (code: ${event.code})`);
+                    console.warn(`❌ WebSocket closed. Code: ${event.code}, Reason: ${event.reason || 'None'}`);
+                    
+                    // Clear ping interval when connection closes
+                    if (this.pingInterval) {
+                        clearInterval(this.pingInterval);
+                        this.pingInterval = null;
+                        console.log('🛑 Ping interval cleared');
+                    }
                     
                     // Update header to show disconnected
                     const priceEl = document.getElementById('header-price');
@@ -352,6 +373,18 @@ const TerminalInit = {
         this.ws.onmessage = (event) => {
             try {
                 const msg = JSON.parse(event.data);
+                
+                // Ignore pong responses from server
+                if (msg.type === 'pong') {
+                    console.log('🏓 Pong received from server');
+                    return;
+                }
+                
+                // Ignore heartbeat messages
+                if (msg.type === 'heartbeat') {
+                    console.log('💓 Heartbeat received from server');
+                    return;
+                }
                 
                 switch (msg.type) {
                     case 'price_update':
