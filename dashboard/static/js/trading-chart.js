@@ -24,7 +24,7 @@ class TradingChart {
         this.currentTimeframe = localStorage.getItem('chartTimeframe') || '1h';
         this.symbol = 'BTC/USDT';
         this.lastCandle = null;
-        
+
         this.initializeChart();
         this.setupResizeHandler();
     }
@@ -40,7 +40,7 @@ class TradingChart {
             }
             console.log('Container:', this.container);
             console.log('Container dimensions:', this.container.clientWidth, 'x', this.container.clientHeight);
-            
+
             const chartOptions = {
                 layout: {
                     background: { color: '#1a1a2e' },
@@ -130,7 +130,7 @@ class TradingChart {
                 borderVisible: false,
                 wickUpColor: '#22c55e',
                 wickDownColor: '#ef4444',
-        });
+            });
 
             // Add volume series (histogram below main chart)
             this.volumeSeries = this.chart.addHistogramSeries({
@@ -178,10 +178,10 @@ class TradingChart {
             // Subscribe to crosshair move events to update tooltip
             this.chart.subscribeCrosshairMove((param) => {
                 try {
-                    // Check if crosshair is over a valid point
+                    // Hide tooltip if cursor is not over a valid point
                     if (
                         !param ||
-                        param.point === undefined ||
+                        !param.point ||
                         !param.time ||
                         param.point.x < 0 ||
                         param.point.y < 0
@@ -190,106 +190,81 @@ class TradingChart {
                         return;
                     }
 
-                    // CRITICAL FIX: For Lightweight Charts v3.8.0, use Map access
+                    // CRITICAL FIX: Access candle data correctly for v3.8.0
                     let candleData = null;
-                    
-                    if (param.seriesData && this.candleSeries) {
-                        // v3.8.0 uses Map, so check if it's a Map first
-                        if (param.seriesData instanceof Map) {
-                            candleData = param.seriesData.get(this.candleSeries);
-                            console.log('📊 Got candle data from Map:', candleData);
-                        } 
-                        // Fallback for other versions
-                        else if (typeof param.seriesData.get === 'function') {
-                            candleData = param.seriesData.get(this.candleSeries);
-                            console.log('📊 Got candle data from .get():', candleData);
-                        }
+
+                    // Method 1: Try using seriesData Map (v3.8.0+)
+                    if (param.seriesData && param.seriesData instanceof Map) {
+                        candleData = param.seriesData.get(this.candleSeries);
                     }
 
-                    // If still no data, hide tooltip
-                    if (!candleData || !candleData.open) {
-                        console.log('⚠️ No candle data at this point');
+                    // Method 2: Fallback - try alternative accessor
+                    if (!candleData && param.seriesData && typeof param.seriesData.get === 'function') {
+                        candleData = param.seriesData.get(this.candleSeries);
+                    }
+
+                    // Validate candle data exists and has required fields
+                    if (!candleData || typeof candleData.open === 'undefined') {
                         tooltip.style.display = 'none';
                         return;
                     }
 
-                    // Format timestamp with proper timezone
-                    let dateStr = 'Unknown Time';
-                    try {
-                        const date = new Date(param.time * 1000);
-                        dateStr = date.toLocaleString('en-NZ', {
-                            timeZone: 'Pacific/Auckland',
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            second: '2-digit',
-                            hour12: false
-                        });
-                    } catch (e) {
-                        console.warn('Date formatting error:', e);
-                    }
+                    // SUCCESS - we have candle data, now build tooltip
+
+                    // Format timestamp
+                    const date = new Date(param.time * 1000);
+                    const dateStr = date.toLocaleString('en-NZ', {
+                        timeZone: 'Pacific/Auckland',
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: false
+                    });
 
                     // Calculate price change
                     const change = candleData.close - candleData.open;
-                    const changePercent = (change / candleData.open * 100).toFixed(2);
+                    const changePercent = ((change / candleData.open) * 100).toFixed(2);
                     const changeColor = change >= 0 ? '#22c55e' : '#ef4444';
                     const changeSymbol = change >= 0 ? '+' : '';
 
-                    // Format volume if available
-                    let volumeHtml = '';
-                    if (candleData.value !== undefined) {
-                        const volumeStr = Number(candleData.value).toLocaleString('en-US', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                        });
-                        volumeHtml = `
-                            <div style="color: #888; margin-top: 4px; padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.1);">
-                                Volume: <span style="color: #26a69a;">${volumeStr}</span>
-                            </div>
-                        `;
-                    }
-
                     // Build tooltip HTML
                     tooltip.innerHTML = `
-                        <div style="color: #888; font-size: 11px; margin-bottom: 6px;">
+                        <div style="color: #888; font-size: 11px; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.1);">
                             ${dateStr}
                         </div>
-                        <div style="margin-bottom: 2px;">
-                            <span style="color: #888;">Open:</span> 
-                            <span style="color: #2196F3; font-weight: 500;">$${candleData.open.toFixed(2)}</span>
+                        <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 12px;">
+                            <span style="color: #888;">Open:</span>
+                            <span style="color: #2196F3; font-weight: 600;">$${candleData.open.toFixed(2)}</span>
+                            
+                            <span style="color: #888;">High:</span>
+                            <span style="color: #4CAF50; font-weight: 600;">$${candleData.high.toFixed(2)}</span>
+                            
+                            <span style="color: #888;">Low:</span>
+                            <span style="color: #F44336; font-weight: 600;">$${candleData.low.toFixed(2)}</span>
+                            
+                            <span style="color: #888;">Close:</span>
+                            <span style="color: #FFC107; font-weight: 600;">$${candleData.close.toFixed(2)}</span>
                         </div>
-                        <div style="margin-bottom: 2px;">
-                            <span style="color: #888;">High:</span> 
-                            <span style="color: #4CAF50; font-weight: 500;">$${candleData.high.toFixed(2)}</span>
-                        </div>
-                        <div style="margin-bottom: 2px;">
-                            <span style="color: #888;">Low:</span> 
-                            <span style="color: #F44336; font-weight: 500;">$${candleData.low.toFixed(2)}</span>
-                        </div>
-                        <div style="margin-bottom: 2px;">
-                            <span style="color: #888;">Close:</span> 
-                            <span style="color: #FFC107; font-weight: 500;">$${candleData.close.toFixed(2)}</span>
-                        </div>
-                        <div style="margin-top: 4px;">
-                            <span style="color: #888;">Change:</span> 
-                            <span style="color: ${changeColor}; font-weight: 600;">
-                                ${changeSymbol}${change.toFixed(2)} (${changeSymbol}${changePercent}%)
+                        <div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.1);">
+                            <span style="color: #888;">Change:</span>
+                            <span style="color: ${changeColor}; font-weight: 700; font-size: 13px;">
+                                ${changeSymbol}$${Math.abs(change).toFixed(2)} (${changeSymbol}${changePercent}%)
                             </span>
                         </div>
-                        ${volumeHtml}
                     `;
 
-                    // Position tooltip near cursor but keep within bounds
-                    const tooltipWidth = 220;
-                    const tooltipHeight = 200;
+                    // Position tooltip intelligently
                     const padding = 15;
-                    
+                    const tooltipWidth = 240;
+                    const tooltipHeight = 180;
+
                     let left = param.point.x + padding;
                     let top = param.point.y + padding;
 
-                    // Keep tooltip within container bounds
+                    // Keep within container bounds
                     if (left + tooltipWidth > this.container.clientWidth) {
                         left = param.point.x - tooltipWidth - padding;
                     }
@@ -297,7 +272,7 @@ class TradingChart {
                         top = param.point.y - tooltipHeight - padding;
                     }
 
-                    // Ensure tooltip doesn't go off-screen
+                    // Final bounds check
                     left = Math.max(10, Math.min(left, this.container.clientWidth - tooltipWidth - 10));
                     top = Math.max(10, Math.min(top, this.container.clientHeight - tooltipHeight - 10));
 
@@ -334,7 +309,7 @@ class TradingChart {
 
         try {
             console.log(`📊 Fetching ${symbol} ${timeframe} candles...`);
-            
+
             // Remove slash from symbol (BTC/USDT -> BTCUSDT) to match Binance format
             const symbolClean = symbol.replace('/', '');
 
@@ -353,17 +328,17 @@ class TradingChart {
 
             // Fetch from Bot API - ensure it returns LATEST candles
             const response = await fetch(`http://localhost:8002/api/candles/${symbolClean}/${timeframe}?limit=${limit}`);
-            
+
             if (!response.ok) {
                 throw new Error(`API error: ${response.status}`);
             }
-            
+
             let candles = await response.json();
-            
+
             if (!candles || candles.length === 0) {
                 throw new Error('No candle data returned from API');
             }
-            
+
             // Sort by time to ensure chronological order
             candles.sort((a, b) => a.time - b.time);
 
@@ -389,25 +364,25 @@ class TradingChart {
             }
 
             console.log(`Filtered to ${candles.length} recent candles (last ${Math.floor(maxAge / 86400)} days)`);
-            
+
             // Validate data freshness - last candle should be recent
             const lastCandle = candles[candles.length - 1];
             const lastCandleTime = lastCandle.time;
             const currentTime = Math.floor(Date.now() / 1000);
             const timeDiff = currentTime - lastCandleTime;
-            
+
             console.log(`Last candle: ${new Date(lastCandleTime * 1000).toLocaleString()}`);
             console.log(`Current time: ${new Date(currentTime * 1000).toLocaleString()}`);
             console.log(`Time difference: ${Math.floor(timeDiff / 60)} minutes`);
-            
+
             if (timeDiff > 7200) {
                 console.warn('⚠️ WARNING: Candle data is OLD (>2 hours)');
                 console.warn(`Last candle close: $${lastCandle.close}`);
             }
-            
+
             // Set candlestick data
             this.candleSeries.setData(candles);
-            
+
             // Set volume data
             const volumeData = candles.map(c => ({
                 time: c.time,
@@ -415,16 +390,16 @@ class TradingChart {
                 color: c.close >= c.open ? 'rgba(38, 166, 154, 0.5)' : 'rgba(239, 83, 80, 0.5)'
             }));
             this.volumeSeries.setData(volumeData);
-            
+
             // Store last candle for updatePrice() to continue from
             this.lastCandle = lastCandle;
-            
+
             // Auto-fit chart to data
             this.chart.timeScale().fitContent();
-            
+
             console.log(`✅ Loaded ${candles.length} candles for ${symbol} ${timeframe}`);
             console.log(`Price range: $${Math.min(...candles.map(c => c.low)).toFixed(2)} - $${Math.max(...candles.map(c => c.high)).toFixed(2)}`);
-            
+
         } catch (error) {
             console.error('❌ Failed to load candles:', error);
             throw error;
@@ -516,7 +491,7 @@ class TradingChart {
         }
 
         const isBuy = trade.type.toUpperCase() === 'BUY';
-        
+
         const marker = {
             time: trade.timestamp,
             position: isBuy ? 'belowBar' : 'aboveBar',
@@ -728,7 +703,7 @@ class TradingChart {
     flashContainer() {
         this.container.style.transition = 'box-shadow 0.3s ease';
         this.container.style.boxShadow = '0 0 20px rgba(59, 130, 246, 0.5)';
-        
+
         setTimeout(() => {
             this.container.style.boxShadow = 'none';
         }, 300);
@@ -784,12 +759,12 @@ class TradingChart {
      */
     async changeTimeframe(timeframe) {
         console.log(`📊 Changing timeframe to: ${timeframe}`);
-        
+
         this.currentTimeframe = timeframe;
-        
+
         // Save to localStorage for persistence
         localStorage.setItem('chartTimeframe', timeframe);
-        
+
         // Reload chart data with new timeframe
         try {
             await this.loadHistoricalData(this.symbol || 'BTC/USDT', timeframe);
@@ -872,10 +847,10 @@ class TradingChart {
      */
     getVisibleRange() {
         if (!this.chart) return null;
-        
+
         const timeScale = this.chart.timeScale();
         const visibleRange = timeScale.getVisibleRange();
-        
+
         return visibleRange;
     }
 
@@ -885,7 +860,7 @@ class TradingChart {
      */
     setVisibleRange(range) {
         if (!this.chart || !range) return;
-        
+
         this.chart.timeScale().setVisibleRange(range);
     }
 
@@ -904,7 +879,7 @@ class TradingChart {
      */
     takeScreenshot() {
         if (!this.chart) return null;
-        
+
         try {
             const canvas = this.container.querySelector('canvas');
             if (canvas) {
