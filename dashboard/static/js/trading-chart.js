@@ -21,8 +21,9 @@ class TradingChart {
         this.volumeSeries = null;
         this.markers = [];
         this.priceLines = {};
-        this.currentTimeframe = '1D';
+        this.currentTimeframe = localStorage.getItem('chartTimeframe') || '1h';
         this.symbol = 'BTC/USDT';
+        this.lastCandle = null;
         
         this.initializeChart();
         this.setupResizeHandler();
@@ -126,7 +127,7 @@ class TradingChart {
     }
 
     /**
-     * Load historical candle data
+     * Load historical candle data - LIVE DATA ONLY
      * @param {string} symbol - Trading pair (e.g., 'BTC/USDT')
      * @param {string} timeframe - Timeframe (e.g., '1H', '4H', '1D', '1W')
      */
@@ -135,25 +136,62 @@ class TradingChart {
         this.currentTimeframe = timeframe;
 
         try {
-            // TODO: Replace with actual API call to bot backend
-            // const response = await fetch(`/api/candles?symbol=${symbol}&timeframe=${timeframe}`);
-            // const data = await response.json();
-
-            // Sample data for demonstration
-            const sampleData = this.generateSampleData(100);
+            console.log(`📊 Fetching ${symbol} ${timeframe} candles...`);
+            
+            // Fetch from Bot API - ensure it returns LATEST candles
+            const response = await fetch(`http://localhost:8002/api/candles/${symbol}/${timeframe}?limit=100`);
+            
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+            
+            const candles = await response.json();
+            
+            if (!candles || candles.length === 0) {
+                throw new Error('No candle data returned from API');
+            }
+            
+            // Sort by time to ensure chronological order
+            candles.sort((a, b) => a.time - b.time);
+            
+            // Validate data freshness - last candle should be recent
+            const lastCandle = candles[candles.length - 1];
+            const lastCandleTime = lastCandle.time;
+            const currentTime = Math.floor(Date.now() / 1000);
+            const timeDiff = currentTime - lastCandleTime;
+            
+            console.log(`Last candle: ${new Date(lastCandleTime * 1000).toLocaleString()}`);
+            console.log(`Current time: ${new Date(currentTime * 1000).toLocaleString()}`);
+            console.log(`Time difference: ${Math.floor(timeDiff / 60)} minutes`);
+            
+            if (timeDiff > 7200) {
+                console.warn('⚠️ WARNING: Candle data is OLD (>2 hours)');
+                console.warn(`Last candle close: $${lastCandle.close}`);
+            }
             
             // Set candlestick data
-            this.candleSeries.setData(sampleData.candles);
+            this.candleSeries.setData(candles);
             
             // Set volume data
-            this.volumeSeries.setData(sampleData.volumes);
+            const volumeData = candles.map(c => ({
+                time: c.time,
+                value: c.volume || 0,
+                color: c.close >= c.open ? 'rgba(38, 166, 154, 0.5)' : 'rgba(239, 83, 80, 0.5)'
+            }));
+            this.volumeSeries.setData(volumeData);
+            
+            // Store last candle for updatePrice() to continue from
+            this.lastCandle = lastCandle;
             
             // Auto-fit chart to data
             this.chart.timeScale().fitContent();
             
-            console.log(`Loaded ${sampleData.candles.length} candles for ${symbol} ${timeframe}`);
+            console.log(`✅ Loaded ${candles.length} candles for ${symbol} ${timeframe}`);
+            console.log(`Price range: $${Math.min(...candles.map(c => c.low)).toFixed(2)} - $${Math.max(...candles.map(c => c.high)).toFixed(2)}`);
+            
         } catch (error) {
-            console.error('Error loading historical data:', error);
+            console.error('❌ Failed to load candles:', error);
+            throw error;
         }
     }
 
@@ -505,13 +543,32 @@ class TradingChart {
     }
 
     /**
-     * Set timeframe and reload data
-     * @param {string} timeframe - New timeframe ('1H', '4H', '1D', '1W')
+     * Change timeframe and reload data with proper async handling
+     * @param {string} timeframe - New timeframe ('1m', '5m', '1h', '4h', '1d', '1w')
+     */
+    async changeTimeframe(timeframe) {
+        console.log(`📊 Changing timeframe to: ${timeframe}`);
+        
+        this.currentTimeframe = timeframe;
+        
+        // Save to localStorage for persistence
+        localStorage.setItem('chartTimeframe', timeframe);
+        
+        // Reload chart data with new timeframe
+        try {
+            await this.loadHistoricalData(this.symbol || 'BTC/USDT', timeframe);
+            console.log(`✅ Timeframe changed to ${timeframe}`);
+        } catch (error) {
+            console.error('❌ Failed to change timeframe:', error);
+        }
+    }
+
+    /**
+     * Legacy sync method - use changeTimeframe() instead
+     * @deprecated
      */
     setTimeframe(timeframe) {
-        this.currentTimeframe = timeframe;
-        this.loadHistoricalData(this.symbol, timeframe);
-        console.log('Timeframe changed to:', timeframe);
+        this.changeTimeframe(timeframe);
     }
 
     /**
