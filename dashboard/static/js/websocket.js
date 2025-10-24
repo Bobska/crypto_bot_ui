@@ -10,6 +10,7 @@ class DashboardWebSocket {
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
         this.reconnectDelay = 5000; // 5 seconds
+        this.pingInterval = null; // Client-side ping interval
         
         // Initialize audio context for sound notifications
         this.audioContext = null;
@@ -37,6 +38,14 @@ class DashboardWebSocket {
         
         // Update connection status indicator
         this.updateConnectionStatus('live');
+        
+        // Start client-side ping to keep connection alive (25s < 30s server timeout)
+        this.pingInterval = setInterval(() => {
+            if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                console.log('🏓 Sending ping to keep connection alive');
+                this.send({ type: 'ping' });
+            }
+        }, 25000); // 25 seconds
         
         // ONE-TIME initial status request - then rely on pushed updates only
         this.send({ command: 'request_status' });
@@ -91,7 +100,24 @@ class DashboardWebSocket {
     }
 
     onClose(event) {
-        console.log('❌ WebSocket disconnected');
+        console.log('❌ WebSocket disconnected - Close code:', event.code);
+        
+        // Log close code details for debugging
+        if (event.code === 1000) {
+            console.log('✅ Normal closure');
+        } else if (event.code === 1001) {
+            console.log('⚠️ Going away (page navigation or server shutdown)');
+        } else if (event.code === 1006) {
+            console.log('⚠️ Abnormal closure (no close frame received)');
+        }
+        
+        // Clear ping interval to prevent pinging a dead connection
+        if (this.pingInterval) {
+            clearInterval(this.pingInterval);
+            this.pingInterval = null;
+            console.log('🛑 Ping interval cleared');
+        }
+        
         this.updateConnectionStatus('disconnected');
         
         // NO POLLING - will reconnect and rely on push updates
@@ -105,15 +131,20 @@ class DashboardWebSocket {
     handleReconnect() {
         if (this.reconnectAttempts < this.maxReconnectAttempts) {
             this.reconnectAttempts++;
-            console.log(`🔄 Reconnecting... Attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
+            
+            // Exponential backoff: delay increases with each attempt
+            const delay = this.reconnectDelay * this.reconnectAttempts;
+            
+            console.log(`🔄 Reconnecting... Attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts} in ${delay/1000}s`);
             
             this.updateConnectionStatus('reconnecting');
             
             setTimeout(() => {
                 this.connect();
-            }, this.reconnectDelay);
+            }, delay);
         } else {
             console.error('❌ Max reconnection attempts reached');
+            console.error('💡 Refresh the page to retry connection');
             this.updateConnectionStatus('failed');
         }
     }
@@ -537,10 +568,31 @@ class DashboardWebSocket {
         }
     }
 
-    close() {
-        if (this.ws) {
-            this.ws.close();
+    disconnect() {
+        console.log('🛑 Disconnecting WebSocket...');
+        
+        // Clear ping interval to stop pinging
+        if (this.pingInterval) {
+            clearInterval(this.pingInterval);
+            this.pingInterval = null;
+            console.log('🛑 Ping interval cleared');
         }
+        
+        // Close WebSocket connection with normal closure code
+        if (this.ws) {
+            this.ws.close(1000, 'Client disconnect');
+            this.ws = null;
+        }
+        
+        // Reset reconnection attempts counter
+        this.reconnectAttempts = 0;
+        
+        console.log('✅ WebSocket disconnected cleanly');
+    }
+    
+    // Alias for backward compatibility
+    close() {
+        this.disconnect();
     }
 }
 
