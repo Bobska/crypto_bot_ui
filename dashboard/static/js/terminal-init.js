@@ -627,6 +627,12 @@ const TerminalInit = {
             usdtEl.textContent = this.formatCurrency(usdtBalance); // Shows cents
         }
         
+        // CRITICAL FIX: Update the "Available Balance" in Manual Trading panel
+        const availableBalanceEl = document.getElementById('available-usdt-balance');
+        if (availableBalanceEl) {
+            availableBalanceEl.textContent = `${this.formatCurrency(usdtBalance)} USDT`;
+        }
+        
         // Only log successful updates, not every price change
         if (Math.random() < 0.1) { // Log 10% of updates
             console.log(`💼 Portfolio: ${btcAmount.toFixed(6)} BTC + ${usdtBalance.toFixed(2)} USDT = ${totalValue.toFixed(2)}`);
