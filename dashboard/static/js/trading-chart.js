@@ -203,6 +203,22 @@ class TradingChart {
                         candleData = param.seriesData.get(this.candleSeries);
                     }
 
+                    // DEBUG: Log what we found
+                    if (!candleData) {
+                        console.log('🔍 DEBUG INFO - No candle data found:');
+                        console.log('  param.seriesData:', param.seriesData);
+                        console.log('  param.seriesData type:', param.seriesData?.constructor.name);
+                        console.log('  this.candleSeries:', this.candleSeries);
+                        console.log('  Is Map?', param.seriesData instanceof Map);
+                        if (param.seriesData instanceof Map) {
+                            console.log('  Map size:', param.seriesData.size);
+                            console.log('  Map keys:', Array.from(param.seriesData.keys()));
+                            console.log('  Map values:', Array.from(param.seriesData.values()));
+                        }
+                    } else {
+                        console.log('✅ Candle data found:', candleData);
+                    }
+
                     // Validate candle data exists and has required fields
                     if (!candleData || typeof candleData.open === 'undefined') {
                         tooltip.style.display = 'none';
