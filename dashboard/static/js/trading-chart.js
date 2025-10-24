@@ -148,7 +148,7 @@ class TradingChart {
                 throw new Error(`API error: ${response.status}`);
             }
             
-            const candles = await response.json();
+            let candles = await response.json();
             
             if (!candles || candles.length === 0) {
                 throw new Error('No candle data returned from API');
@@ -156,6 +156,29 @@ class TradingChart {
             
             // Sort by time to ensure chronological order
             candles.sort((a, b) => a.time - b.time);
+
+            // For longer timeframes, only keep recent data to avoid testnet price anomalies
+            const now = Math.floor(Date.now() / 1000);
+            const tf = (timeframe || '').toLowerCase();
+            const maxAgeSeconds = {
+                '1m': 2 * 24 * 3600,    // 2 days
+                '5m': 3 * 24 * 3600,    // 3 days
+                '15m': 5 * 24 * 3600,   // 5 days
+                '1h': 7 * 24 * 3600,    // 1 week
+                '4h': 14 * 24 * 3600,   // 2 weeks
+                '1d': 30 * 24 * 3600,   // 1 month
+                '1w': 60 * 24 * 3600    // 2 months
+            };
+            const maxAge = maxAgeSeconds[tf] || (7 * 24 * 3600);
+            const cutoffTime = now - maxAge;
+
+            candles = candles.filter(c => c.time >= cutoffTime);
+
+            if (candles.length === 0) {
+                throw new Error('No recent candles available for this timeframe');
+            }
+
+            console.log(`Filtered to ${candles.length} recent candles (last ${Math.floor(maxAge / 86400)} days)`);
             
             // Validate data freshness - last candle should be recent
             const lastCandle = candles[candles.length - 1];
