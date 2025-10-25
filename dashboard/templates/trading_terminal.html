@@ -208,33 +208,24 @@
                 </div>
                 <div class="chart-host">
                     <!-- IMPORTANT: preserve ID/classes for TradingChart -->
-                    <div id="tradingChart" style="background: #0f172a; border-radius: 8px;"></div>
+                    <div id="tradingChart"></div>
                 </div>
             </div>
-            <div class="history-section">
-                <h6 class="mb-2"><i class="fas fa-history"></i> Order History</h6>
-                <div class="table-responsive">
-                    <table class="table table-dark order-history-table">
-                        <thead>
-                            <tr>
-                                <th>Time</th>
-                                <th>Type</th>
-                                <th>Amount</th>
-                                <th>P&L</th>
-                            </tr>
-                        </thead>
-                        <tbody id="orderHistoryBody">
-                            <tr>
-                                <td colspan="4" class="text-center text-muted">
-                                    <em>Loading trade history...</em>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+            <!-- PHASE 5.2: Trade History Table -->
+            <div class="trade-history-section">
+                <h3 class="section-title">📜 RECENT TRADES</h3>
+                <div class="trade-table">
+                    <div class="trade-table-header">
+                        <span class="col-time">Time</span>
+                        <span class="col-action">Action</span>
+                        <span class="col-price">Price</span>
+                        <span class="col-amount">Amount</span>
+                        <span class="col-profit">Profit</span>
+                    </div>
+                    <div class="trade-table-body" id="tradeTableBody">
+                        <!-- Trades will be inserted here -->
+                    </div>
                 </div>
-                <a href="{% url 'trades' %}" class="btn btn-outline-light btn-sm w-100">
-                    <i class="fas fa-list"></i> View All Orders
-                </a>
             </div>
         </div>
 

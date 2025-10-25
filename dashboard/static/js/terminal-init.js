@@ -83,30 +83,85 @@ const TerminalInit = {
                 this.trades = trades;
             }
 
-            const tbody = document.getElementById('orderHistoryBody');
-            if (!tbody) return;
-
-            if (!Array.isArray(trades) || trades.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No trades yet</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = trades.slice(0, 3).map(trade => `
-                <tr>
-                    <td>${new Date(trade.timestamp).toLocaleTimeString()}</td>
-                    <td><span class="badge bg-${trade.action === 'BUY' ? 'success' : 'danger'}">${trade.action}</span></td>
-                    <td>${trade.amount || '0.001'}</td>
-                    <td class="${trade.result && trade.result.includes('+') ? 'text-success' : 'text-danger'}">
-                        ${trade.result || '--'}
-                    </td>
-                </tr>
-            `).join('');
+            // Update new trade history section
+            this.updateTradeHistory();
 
             // Update today's results summary
             this.updateTodaysResults();
+
+            // Backwards compatibility: update legacy table if present
+            const tbody = document.getElementById('orderHistoryBody');
+            if (tbody) {
+                if (!Array.isArray(trades) || trades.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No trades yet</td></tr>';
+                } else {
+                    tbody.innerHTML = trades.slice(0, 3).map(trade => `
+                        <tr>
+                            <td>${new Date(trade.timestamp).toLocaleTimeString()}</td>
+                            <td><span class="badge bg-${trade.action === 'BUY' ? 'success' : 'danger'}">${trade.action}</span></td>
+                            <td>${trade.amount || '0.001'}</td>
+                            <td class="${trade.result && trade.result.includes('+') ? 'text-success' : 'text-danger'}">
+                                ${trade.result || '--'}
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            }
         } catch (error) {
             console.error('Failed to load order history:', error);
         }
+    },
+
+    /**
+     * PHASE 5: Render the new trade history table (limit 20, newest first)
+     */
+    updateTradeHistory() {
+        const container = document.getElementById('tradeTableBody');
+        if (!container) return;
+
+        if (!Array.isArray(this.trades) || this.trades.length === 0) {
+            container.innerHTML = '<div class="text-muted" style="padding:8px 0;">No trades yet</div>';
+            return;
+        }
+
+        const rows = this.trades
+            .slice(0, 20)
+            .map(t => {
+                const time = t.timestamp ? new Date(t.timestamp).toLocaleTimeString() : '--';
+                const action = (t.action || '').toUpperCase();
+                const actionClass = action === 'BUY' ? 'action-buy' : 'action-sell';
+                const price = typeof t.price === 'number' ? `$${this.formatNumber(t.price)}` : '--';
+                const amount = typeof t.amount === 'number' ? t.amount.toFixed(6) : (t.amount || '--');
+                // Profit: prefer numeric field, else parse string
+                let profitVal = null;
+                if (typeof t.profit === 'number') {
+                    profitVal = t.profit;
+                } else if (typeof t.result === 'string') {
+                    const m = t.result.match(/[+-]?\$?([0-9,.]+)/);
+                    if (m && m[0]) {
+                        const raw = m[0].replace('$', '').replace(/,/g, '');
+                        const val = parseFloat(raw);
+                        if (!isNaN(val)) {
+                            profitVal = t.result.trim().startsWith('-') ? -Math.abs(val) : Math.abs(val);
+                        }
+                    }
+                }
+                const profitStr = profitVal === null ? '--' : this.formatCurrency(profitVal);
+                const profitClass = profitVal === null ? '' : (profitVal >= 0 ? 'positive' : 'negative');
+
+                return `
+                    <div class="trade-row">
+                        <span class="col-time">${time}</span>
+                        <span class="col-action ${actionClass}">${action || '--'}</span>
+                        <span class="col-price">${price}</span>
+                        <span class="col-amount">${amount}</span>
+                        <span class="col-profit profit-value ${profitClass}">${profitStr}</span>
+                    </div>
+                `;
+            })
+            .join('');
+
+        container.innerHTML = rows;
     },
     
     /**
@@ -538,6 +593,7 @@ const TerminalInit = {
                 this.trades = Array.isArray(this.trades) ? this.trades : [];
                 this.trades.unshift(data);
                 this.updateTodaysResults();
+                this.updateTradeHistory();
             }
         } catch (e) {
             // Non-fatal
