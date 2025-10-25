@@ -1339,3 +1339,116 @@ body, html {
 .btn-stop:active {
     transform: translateY(0);
 }
+
+/* ===================================
+   PHASE 4: RIGHT PANEL CARDS
+   =================================== */
+
+.wallet-card,
+.position-card,
+.results-card {
+    background: #252d3d;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 12px;
+}
+
+.card-title {
+    font-size: 14px;
+    color: #94a3b8;
+    margin: 0 0 15px 0;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+/* Wallet Balance */
+.balance-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+}
+
+.balance-row .currency {
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+.balance-row .amount {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.total-value {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #3a4556;
+}
+
+.total-value .total-label {
+    color: #94a3b8;
+    font-size: 12px;
+    margin-bottom: 6px;
+    letter-spacing: 0.3px;
+}
+
+.total-value .total-amount {
+    font-size: 24px;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.2;
+}
+
+.total-value .total-note {
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+/* Position Card */
+.position-status {
+    font-size: 18px;
+    text-align: center;
+    margin-bottom: 15px;
+    color: #e5e7eb;
+}
+
+.position-details .detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+}
+
+.position-details .label {
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+.position-details .value {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.profit-value.positive {
+    color: #22c55e;
+}
+
+.profit-value.negative {
+    color: #ef4444;
+}
+
+/* Today's Results */
+.results-card .result-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+}
+
+.results-card .label {
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+.results-card .value {
+    color: #ffffff;
+    font-weight: 600;
+}

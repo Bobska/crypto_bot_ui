@@ -14,6 +14,7 @@ const TerminalInit = {
     // State
     currentPrice: 0,
     position: null,
+    trades: [],
     initStartTime: null,
     reconnecting: false,
     pingInterval: null,
@@ -77,6 +78,10 @@ const TerminalInit = {
             if (!response || !response.ok) return;
 
             const trades = await response.json();
+            // Store full list for today's results calculations
+            if (Array.isArray(trades)) {
+                this.trades = trades;
+            }
 
             const tbody = document.getElementById('orderHistoryBody');
             if (!tbody) return;
@@ -96,6 +101,9 @@ const TerminalInit = {
                     </td>
                 </tr>
             `).join('');
+
+            // Update today's results summary
+            this.updateTodaysResults();
         } catch (error) {
             console.error('Failed to load order history:', error);
         }
@@ -170,6 +178,9 @@ const TerminalInit = {
             
             // Update quick trade estimates
             this.updateQuickTradeEstimates();
+
+            // Update right panel position card
+            this.updatePositionCard();
         } catch (error) {
             console.error('❌ Position fetch error:', error);
             // NO FALLBACK - Show empty/zero to indicate data is not live
@@ -475,6 +486,9 @@ const TerminalInit = {
         
         // Update portfolio display with new price
         this.updatePortfolioDisplay();
+
+    // Update position card current price / profit
+    this.updatePositionCard();
         
         // Update quick trade estimates
         this.updateQuickTradeEstimates();
@@ -513,7 +527,21 @@ const TerminalInit = {
                 this.pnlCalc.updatePrice(this.currentPrice);
                 this.pnlCalc.renderToDOM('pnlContainer');
             }
+
+            // Update position card after refreshed data
+            this.updatePositionCard();
         });
+
+        // Track trade for today's results if timestamp available
+        try {
+            if (data && data.timestamp) {
+                this.trades = Array.isArray(this.trades) ? this.trades : [];
+                this.trades.unshift(data);
+                this.updateTodaysResults();
+            }
+        } catch (e) {
+            // Non-fatal
+        }
     },
     
     /**
@@ -530,6 +558,9 @@ const TerminalInit = {
 
         // Update the Bot Status panel details
         this.updateBotStatus(data);
+
+        // Update right panel position card
+        this.updatePositionCard();
     },
 
     /**
@@ -665,20 +696,32 @@ const TerminalInit = {
         const btcValue = btcAmount * this.currentPrice;
         const totalValue = btcValue + usdtBalance;
         
-        // Update DOM elements (template uses kebab-case IDs)
-        const totalEl = document.getElementById('total-portfolio-value');
-        if (totalEl) {
-            totalEl.textContent = this.formatCurrency(totalValue); // Shows cents
+        // Update DOM elements (support legacy + new Phase 4 IDs)
+        const totalElLegacy = document.getElementById('total-portfolio-value');
+        if (totalElLegacy) {
+            totalElLegacy.textContent = this.formatCurrency(totalValue);
         }
-        
-        const btcEl = document.getElementById('portfolio-btc');
-        if (btcEl) {
-            btcEl.textContent = btcAmount.toFixed(6); // 6 decimals for BTC
+        const btcElLegacy = document.getElementById('portfolio-btc');
+        if (btcElLegacy) {
+            btcElLegacy.textContent = btcAmount.toFixed(6);
         }
-        
-        const usdtEl = document.getElementById('portfolio-usdt');
-        if (usdtEl) {
-            usdtEl.textContent = this.formatCurrency(usdtBalance); // Shows cents
+        const usdtElLegacy = document.getElementById('portfolio-usdt');
+        if (usdtElLegacy) {
+            usdtElLegacy.textContent = this.formatCurrency(usdtBalance);
+        }
+
+        // Phase 4 wallet card IDs
+        const walletUsdtEl = document.getElementById('walletUSDT');
+        if (walletUsdtEl) {
+            walletUsdtEl.textContent = this.formatCurrency(usdtBalance);
+        }
+        const walletBtcEl = document.getElementById('walletBTC');
+        if (walletBtcEl) {
+            walletBtcEl.textContent = (btcAmount || 0).toFixed(6);
+        }
+        const totalValueEl = document.getElementById('totalValue');
+        if (totalValueEl) {
+            totalValueEl.textContent = this.formatCurrency(totalValue);
         }
         
         // CRITICAL FIX: Update the "Available Balance" in Manual Trading panel
@@ -691,6 +734,94 @@ const TerminalInit = {
         if (Math.random() < 0.1) { // Log 10% of updates
             console.log(`💼 Portfolio: ${btcAmount.toFixed(6)} BTC + ${usdtBalance.toFixed(2)} USDT = ${totalValue.toFixed(2)}`);
         }
+    },
+
+    /**
+     * PHASE 4: Update right panel position card
+     */
+    updatePositionCard() {
+        const statusEl = document.getElementById('positionStatus');
+        const detailsEl = document.getElementById('positionDetails');
+        const entryEl = document.getElementById('posEntryPrice');
+        const currentEl = document.getElementById('posCurrentPrice');
+        const profitEl = document.getElementById('posProfit');
+
+        if (!statusEl || !detailsEl) return; // Card not present
+
+        if (this.position && this.position.has_position) {
+            // Show details
+            statusEl.style.display = 'none';
+            detailsEl.style.display = '';
+
+            const entry = this.position.entry_price || 0;
+            const current = this.currentPrice || this.position.current_price || 0;
+            const amount = this.position.amount || 0;
+            const profit = (current - entry) * amount;
+
+            if (entryEl) entryEl.textContent = this.formatCurrency(entry);
+            if (currentEl) currentEl.textContent = this.formatCurrency(current);
+            if (profitEl) {
+                profitEl.textContent = this.formatCurrency(profit);
+                profitEl.classList.remove('positive', 'negative');
+                if (profit > 0) profitEl.classList.add('positive');
+                if (profit < 0) profitEl.classList.add('negative');
+            }
+        } else {
+            // No active position
+            statusEl.textContent = 'Not Trading';
+            statusEl.style.display = '';
+            detailsEl.style.display = 'none';
+        }
+    },
+
+    /**
+     * PHASE 4: Update Today's Results summary
+     */
+    updateTodaysResults() {
+        const tradesCountEl = document.getElementById('todayTrades');
+        const profitEl = document.getElementById('todayProfit');
+        if (!tradesCountEl || !profitEl) return;
+
+        const today = new Date();
+        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
+        let todays = [];
+        if (Array.isArray(this.trades)) {
+            todays = this.trades.filter(t => {
+                try {
+                    const ts = new Date(t.timestamp);
+                    return ts >= startOfDay && ts < endOfDay;
+                } catch { return false; }
+            });
+        }
+
+        const count = todays.length;
+        let totalProfit = 0;
+        todays.forEach(t => {
+            // Prefer numeric profit field if provided
+            if (typeof t.profit === 'number') {
+                totalProfit += t.profit;
+                return;
+            }
+            // Fallback: parse result string like "+$100.00" or "-$12.34"
+            if (typeof t.result === 'string') {
+                const m = t.result.match(/[+-]?\$?([0-9,.]+)/);
+                if (m && m[0]) {
+                    const raw = m[0].replace('$', '').replace(/,/g, '');
+                    const val = parseFloat(raw);
+                    if (!isNaN(val)) {
+                        totalProfit += t.result.trim().startsWith('-') ? -Math.abs(val) : Math.abs(val);
+                    }
+                }
+            }
+        });
+
+        tradesCountEl.textContent = String(count);
+        profitEl.textContent = this.formatCurrency(totalProfit);
+        profitEl.classList.remove('positive', 'negative');
+        if (totalProfit > 0) profitEl.classList.add('positive');
+        if (totalProfit < 0) profitEl.classList.add('negative');
     },
 
     /**

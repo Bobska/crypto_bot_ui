@@ -240,82 +240,61 @@
 
         <!-- Right Column: Wallet, Position, Today's Results -->
         <div class="right-panel">
-            <div class="panel">
-                <h5><i class="fas fa-wallet"></i> Wallet Balance</h5>
-                <div class="balance-display">
-                    <div class="balance-label">Total Value</div>
-                    <div class="balance-value" id="total-portfolio-value">$5,450.00</div>
+            <!-- PHASE 4.1: Wallet Balance Card -->
+            <div class="wallet-card">
+                <h3 class="card-title">💰 WALLET BALANCE</h3>
+                <div class="balance-row">
+                    <span class="currency">USDT:</span>
+                    <span class="amount" id="walletUSDT">$0.00</span>
                 </div>
-                <div class="info-row">
-                    <span class="info-label">BTC</span>
-                    <span class="info-value" id="portfolio-btc">0.100000</span>
+                <div class="balance-row">
+                    <span class="currency">BTC:</span>
+                    <span class="amount" id="walletBTC">0.000000</span>
                 </div>
-                <div class="info-row">
-                    <span class="info-label">USDT</span>
-                    <span class="info-value" id="portfolio-usdt">$950.00</span>
-                </div>
-                <div class="portfolio-chart-container">
-                    <canvas id="portfolioChart"></canvas>
+                <div class="total-value">
+                    <div class="total-label">📊 TOTAL VALUE</div>
+                    <div class="total-amount" id="totalValue">$0.00</div>
+                    <div class="total-note">(if sold now)</div>
                 </div>
             </div>
 
-            <div class="panel">
-                <h5><i class="fas fa-chart-line"></i> Current Position</h5>
-                <div id="pnlContainer">
-                    <div class="info-row">
-                        <span class="info-label">Entry Price</span>
-                        <span class="info-value" id="entry-price">$44,000.00</span>
+            <!-- PHASE 4.2: Current Position Card -->
+            <div class="position-card">
+                <h3 class="card-title">🤖 BOT POSITION</h3>
+                <div class="position-status" id="positionStatus">Not Trading</div>
+                <div class="position-details" id="positionDetails" style="display: none;">
+                    <div class="detail-row">
+                        <span class="label">Bought at:</span>
+                        <span class="value" id="posEntryPrice">--</span>
                     </div>
-                    <div class="info-row">
-                        <span class="info-label">Current Price</span>
-                        <span class="info-value" id="current-position-price">$45,000.00</span>
+                    <div class="detail-row">
+                        <span class="label">Current:</span>
+                        <span class="value" id="posCurrentPrice">--</span>
                     </div>
-                    <div class="info-row">
-                        <span class="info-label">Unrealized P&L</span>
-                        <span class="info-value pnl-positive" id="unrealized-pnl">+$100.00 (+2.27%)</span>
-                    </div>
-                    <div class="if-sold-now">
-                        <div class="label">If Sold Now</div>
-                        <div class="value" id="if-sold-value">$4,600.00</div>
+                    <div class="detail-row">
+                        <span class="label">Profit:</span>
+                        <span class="value profit-value" id="posProfit">$0.00</span>
                     </div>
                 </div>
-                <button class="btn btn-trade-sell w-100" onclick="quickSell()">
-                    <i class="fas fa-hand-holding-usd"></i> Quick Sell Position
-                </button>
             </div>
 
-            <div class="panel">
-                <h5><i class="fas fa-chart-pie"></i> Today's Results</h5>
-                <div class="text-muted">Coming soon...</div>
+            <!-- PHASE 4.3: Today's Results Card -->
+            <div class="results-card">
+                <h3 class="card-title">📅 TODAY'S RESULTS</h3>
+                <div class="result-row">
+                    <span class="label">Trades:</span>
+                    <span class="value" id="todayTrades">0</span>
+                </div>
+                <div class="result-row">
+                    <span class="label">Total Profit:</span>
+                    <span class="value profit-value" id="todayProfit">$0.00</span>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-// Initialize portfolio pie chart
-const portfolioCtx = document.getElementById('portfolioChart').getContext('2d');
-const portfolioChart = new Chart(portfolioCtx, {
-    type: 'doughnut',
-    data: {
-        labels: ['BTC', 'USDT'],
-        datasets: [{
-            data: [4500, 950],
-            backgroundColor: ['#f7931a', '#26a17b'],
-            borderWidth: 0
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: false
-            }
-        }
-    }
-});
-
 // Global trading chart instance
 let tradingChart = null;
 
