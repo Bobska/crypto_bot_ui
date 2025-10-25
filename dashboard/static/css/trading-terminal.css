@@ -35,6 +35,25 @@ body {
 }
 
 /* ===================================
+   FULL-WIDTH OVERRIDES (Terminal page only)
+   =================================== */
+/* Base template wraps content in .container.my-4; make it edge-to-edge here */
+.container.my-4 {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+/* Remove default horizontal padding from container-fluid as well */
+.container-fluid {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+/* ===================================
    TERMINAL HEADER (PHASE 6)
    =================================== */
 .terminal-header {
