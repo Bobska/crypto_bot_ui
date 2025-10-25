@@ -1,6 +1,16 @@
 {% extends "base.html" %}
 {% load static %}
 
+<!--
+    Working features to PRESERVE (do not alter logic; layout/styling changes only):
+    - WebSocket connection and keepalive (terminal-init.js / websocket.js) with auto-reconnect and status indicator
+    - TradingChart initialization and updates (trading-chart.js) including candlestick series and timeframes
+    - Price update handlers (terminal-init.js): portfolio totals, quick-trade estimates, header price/change
+    - Trade history display (terminal-init.js loadOrderHistory -> populates #orderHistoryBody)
+    - Bot status indicators (emoji 🟡/🟢/🔴 in template + status text/buttons)
+    - Tooltip implementation on chart (trading-chart.js subscribeCrosshairMove using seriesPrices)
+-->
+
 {% block title %}Trading Terminal - Crypto Bot{% endblock %}
 
 {% block extra_css %}
