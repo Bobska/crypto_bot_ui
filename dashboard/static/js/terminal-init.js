@@ -224,6 +224,10 @@ const TerminalInit = {
                 priceEl.style.color = '#fbbf24'; // Yellow/orange for static
                 priceEl.style.fontWeight = 'bold';
             }
+            const priceElNew = document.getElementById('headerPrice');
+            if (priceElNew && this.currentPrice > 0) {
+                priceElNew.textContent = this.formatCurrency(this.currentPrice);
+            }
 
             // Update bot status panel based on latest position
             this.updateBotStatus();
@@ -371,6 +375,11 @@ const TerminalInit = {
                         statusElement.title = 'Connected';
                         console.log('✅ Connection status updated to: Connected');
                     }
+                    const headerStatus = document.getElementById('headerStatus');
+                    if (headerStatus) {
+                        headerStatus.textContent = '🟢 LIVE';
+                        headerStatus.style.color = '#22c55e';
+                    }
                     
                     this.setupWebSocketHandlers();
                     
@@ -417,6 +426,15 @@ const TerminalInit = {
                     if (priceEl) {
                         priceEl.textContent = '⚪ Reconnecting...';
                         priceEl.style.color = '#fbbf24'; // Yellow
+                    }
+                    const priceElNew = document.getElementById('headerPrice');
+                    if (priceElNew) {
+                        priceElNew.textContent = 'Reconnecting...';
+                    }
+                    const headerStatus = document.getElementById('headerStatus');
+                    if (headerStatus) {
+                        headerStatus.textContent = '🟡 RECONNECTING';
+                        headerStatus.style.color = '#fbbf24';
                     }
                     
                     // Always try to reconnect
@@ -1064,8 +1082,9 @@ const TerminalInit = {
      * Update header price display - LIVE DATA INDICATOR
      */
     updateHeaderPrice(price, change) {
-        // CORRECT IDs for trading terminal
+        // Update both legacy and new header elements
         const priceEl = document.getElementById('header-price');
+        const priceElNew = document.getElementById('headerPrice');
         const changeEl = document.getElementById('header-change');
         const timestampEl = document.getElementById('header-timestamp');
         
@@ -1084,6 +1103,14 @@ const TerminalInit = {
             } else if (change < 0) {
                 priceEl.classList.add('price-flash-down');
             }
+        }
+
+        if (priceElNew) {
+            priceElNew.textContent = this.formatCurrency(price);
+            priceElNew.classList.remove('flash-green', 'flash-red');
+            void priceElNew.offsetWidth;
+            if (change > 0) priceElNew.classList.add('flash-green');
+            if (change < 0) priceElNew.classList.add('flash-red');
         }
         
         if (changeEl && change !== undefined) {
