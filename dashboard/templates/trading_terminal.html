@@ -380,12 +380,81 @@
         0%, 100% { opacity: 1; transform: scale(1); }
         50% { opacity: 0.7; transform: scale(1.1); }
     }
+
+    /* === New Grid Layout (Phase 2) === */
+    body, html {
+        height: 100%;
+        background: #0f1419; /* Dark theme background */
+    }
+    .terminal-grid {
+        display: grid;
+        grid-template-columns: 280px 1fr 350px; /* left | center | right */
+        grid-template-rows: 1fr;
+        gap: 12px;
+        height: calc(100vh - 140px); /* viewport minus header approx */
+        overflow: hidden; /* no scrolling on main view */
+        padding: 8px 0 16px 0;
+    }
+    .left-panel, .center-panel, .right-panel {
+        min-height: 0; /* allow flex children to size */
+    }
+    .panel {
+        background: #1a1f2e; /* panel background */
+        border: 1px solid #2a3441; /* panel border */
+        border-radius: 10px;
+        padding: 14px;
+        margin-bottom: 12px;
+    }
+    .center-panel {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+    .chart-section {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        flex: 7 1 70%;
+        min-height: 0;
+    }
+    .history-section {
+        flex: 3 1 30%;
+        min-height: 0;
+        overflow-y: auto; /* table scrolls, grid stays fixed */
+        background: #1a1f2e;
+        border: 1px solid #2a3441;
+        border-radius: 10px;
+        padding: 10px;
+    }
+    .timeframe-controls .timeframe-btn {
+        background: #1f2835;
+        border: 1px solid #2a3441;
+        color: #9ca3af;
+    }
+    .timeframe-controls .timeframe-btn.active {
+        background: #3b82f6;
+        color: #fff;
+        border-color: #3b82f6;
+    }
+    /* Make chart fill available height inside its section */
+    .chart-host {
+        position: relative;
+        flex: 1 1 auto;
+        min-height: 0;
+        background: #0f172a;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .chart-host #tradingChart {
+        height: 100% !important; /* override inline size to follow container */
+        width: 100%;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid">
-    <!-- Terminal Header -->
+    <!-- Terminal Header (preserved) -->
     <div class="terminal-header">
         <div class="d-flex align-items-center justify-content-between">
             <div>
@@ -407,7 +476,6 @@
                 <span id="header-timestamp">--:--:--</span>
             </div>
         </div>
-        
         <!-- Settings Dropdown -->
         <div class="dropdown settings-dropdown">
             <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
@@ -423,61 +491,12 @@
         </div>
     </div>
 
-    <!-- Main Content Row -->
-    <div class="row">
-        <!-- Left Sidebar -->
-        <div class="col-md-3">
-            <!-- Portfolio Card -->
-            <div class="terminal-card">
-                <h5><i class="fas fa-wallet"></i> Portfolio</h5>
-                <div class="balance-display">
-                    <div class="balance-label">Total Value</div>
-                    <div class="balance-value" id="total-portfolio-value">$5,450.00</div>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">BTC</span>
-                    <span class="info-value" id="portfolio-btc">0.100000</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">USDT</span>
-                    <span class="info-value" id="portfolio-usdt">$950.00</span>
-                </div>
-                <div class="portfolio-chart-container">
-                    <canvas id="portfolioChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Position Card -->
-            <div class="terminal-card">
-                <h5><i class="fas fa-chart-line"></i> Current Position</h5>
-                <div id="pnlContainer">
-                    <div class="info-row">
-                        <span class="info-label">Entry Price</span>
-                        <span class="info-value" id="entry-price">$44,000.00</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Current Price</span>
-                        <span class="info-value" id="current-position-price">$45,000.00</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Unrealized P&L</span>
-                        <span class="info-value pnl-positive" id="unrealized-pnl">+$100.00 (+2.27%)</span>
-                    </div>
-                    
-                    <div class="if-sold-now">
-                        <div class="label">If Sold Now</div>
-                        <div class="value" id="if-sold-value">$4,600.00</div>
-                    </div>
-                </div>
-                
-                <button class="btn btn-trade-sell" onclick="quickSell()">
-                    <i class="fas fa-hand-holding-usd"></i> Quick Sell Position
-                </button>
-            </div>
-
-            <!-- Bot Status Card -->
-            <div class="terminal-card">
-                <h5>
+    <!-- New Grid Layout -->
+    <div class="terminal-grid">
+        <!-- Left Column: Bot Control Panel -->
+        <div class="left-panel">
+            <div class="panel">
+                <h5 class="mb-3">
                     <span class="status-indicator active" id="bot-status-indicator"></span>
                     Bot Status
                 </h5>
@@ -498,8 +517,7 @@
                 </button>
             </div>
 
-            <!-- Quick Trade Card -->
-            <div class="terminal-card">
+            <div class="panel">
                 <h5><i class="fas fa-bolt"></i> Quick Trade</h5>
                 <select class="amount-selector" id="quick-trade-amount">
                     <option value="0.001" id="quickTradeOption0">0.001 BTC (<span id="quickTradeEstimate0">~$45</span>)</option>
@@ -519,8 +537,44 @@
                 </div>
             </div>
 
-            <!-- AI Advisor Card -->
-            <div class="terminal-card">
+            <div class="panel">
+                <h5><i class="fas fa-exchange-alt"></i> Manual Trading</h5>
+                <div class="balance-display mb-3">
+                    <div class="balance-label">Available Balance</div>
+                    <div class="balance-value" id="available-usdt-balance">$950.00 USDT</div>
+                </div>
+                <label class="form-label text-muted">Amount (BTC)</label>
+                <input type="number" class="amount-selector" id="manual-amount" 
+                       placeholder="0.01" step="0.001" min="0.001" max="1.0" value="0.01">
+                <div class="info-row">
+                    <span class="info-label">Estimated Value</span>
+                    <span class="info-value" id="manual-estimated-value">$450.00</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Trading Fee (0.1%)</span>
+                    <span class="info-value" id="manual-fee">$0.45</span>
+                </div>
+                <div class="risk-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Max recommended trade: 0.5 BTC
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="confirm-risks">
+                    <label class="form-check-label text-muted" for="confirm-risks">
+                        I understand the risks
+                    </label>
+                </div>
+                <div class="d-grid gap-2">
+                    <button class="btn-trade-buy" id="manual-buy-btn" disabled>
+                        <i class="fas fa-arrow-up"></i> BUY
+                    </button>
+                    <button class="btn-trade-sell" id="manual-sell-btn" disabled>
+                        <i class="fas fa-arrow-down"></i> SELL
+                    </button>
+                </div>
+            </div>
+
+            <div class="panel">
                 <h5><i class="fas fa-robot"></i> AI Co-Pilot</h5>
                 <label class="form-label text-muted">AI Mode</label>
                 <select class="amount-selector" id="aiMode">
@@ -547,74 +601,24 @@
             </div>
         </div>
 
-        <!-- Center Column -->
-        <div class="col-md-6">
-            <!-- Chart Card -->
-            <div class="terminal-card">
-                <h5><i class="fas fa-chart-candlestick"></i> Price Chart</h5>
-                <div class="btn-group mb-3" role="group">
-                    <button type="button" class="btn btn-sm btn-outline-secondary timeframe-btn" data-timeframe="1m">1M</button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary timeframe-btn" data-timeframe="5m">5M</button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary timeframe-btn active" data-timeframe="1h">1H</button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary timeframe-btn" data-timeframe="4h">4H</button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary timeframe-btn" data-timeframe="1d">1D</button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary timeframe-btn" data-timeframe="1w">1W</button>
+        <!-- Center Column: Chart (70%) + Trade History (30%) -->
+        <div class="center-panel">
+            <div class="chart-section">
+                <div class="timeframe-controls btn-group" role="group">
+                    <button type="button" class="btn btn-sm timeframe-btn" data-timeframe="1m">1M</button>
+                    <button type="button" class="btn btn-sm timeframe-btn" data-timeframe="5m">5M</button>
+                    <button type="button" class="btn btn-sm timeframe-btn active" data-timeframe="1h">1H</button>
+                    <button type="button" class="btn btn-sm timeframe-btn" data-timeframe="4h">4H</button>
+                    <button type="button" class="btn btn-sm timeframe-btn" data-timeframe="1d">1D</button>
+                    <button type="button" class="btn btn-sm timeframe-btn" data-timeframe="1w">1W</button>
                 </div>
-                <div id="tradingChart" style="height: 500px; background: #0f172a; border-radius: 8px;"></div>
-            </div>
-
-            
-        </div>
-
-        <!-- Right Sidebar -->
-        <div class="col-md-3">
-            <!-- Manual Trading Panel -->
-            <div class="terminal-card">
-                <h5><i class="fas fa-exchange-alt"></i> Manual Trading</h5>
-                
-                <div class="balance-display mb-3">
-                    <div class="balance-label">Available Balance</div>
-                    <div class="balance-value" id="available-usdt-balance">$950.00 USDT</div>
-                </div>
-
-                <label class="form-label text-muted">Amount (BTC)</label>
-                <input type="number" class="amount-selector" id="manual-amount" 
-                       placeholder="0.01" step="0.001" min="0.001" max="1.0" value="0.01">
-                
-                <div class="info-row">
-                    <span class="info-label">Estimated Value</span>
-                    <span class="info-value" id="manual-estimated-value">$450.00</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Trading Fee (0.1%)</span>
-                    <span class="info-value" id="manual-fee">$0.45</span>
-                </div>
-                
-                <div class="risk-warning">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    Max recommended trade: 0.5 BTC
-                </div>
-
-                <div class="form-check mb-3">
-                    <input class="form-check-input" type="checkbox" id="confirm-risks">
-                    <label class="form-check-label text-muted" for="confirm-risks">
-                        I understand the risks
-                    </label>
-                </div>
-
-                <div class="d-grid gap-2">
-                    <button class="btn-trade-buy" id="manual-buy-btn" disabled>
-                        <i class="fas fa-arrow-up"></i> BUY
-                    </button>
-                    <button class="btn-trade-sell" id="manual-sell-btn" disabled>
-                        <i class="fas fa-arrow-down"></i> SELL
-                    </button>
+                <div class="chart-host">
+                    <!-- IMPORTANT: preserve ID/classes for TradingChart -->
+                    <div id="tradingChart" style="background: #0f172a; border-radius: 8px;"></div>
                 </div>
             </div>
-
-            <!-- Order History -->
-            <div class="terminal-card">
-                <h5><i class="fas fa-history"></i> Order History</h5>
+            <div class="history-section">
+                <h6 class="mb-2"><i class="fas fa-history"></i> Order History</h6>
                 <div class="table-responsive">
                     <table class="table table-dark order-history-table">
                         <thead>
@@ -637,6 +641,58 @@
                 <a href="{% url 'trades' %}" class="btn btn-outline-light btn-sm w-100">
                     <i class="fas fa-list"></i> View All Orders
                 </a>
+            </div>
+        </div>
+
+        <!-- Right Column: Wallet, Position, Today's Results -->
+        <div class="right-panel">
+            <div class="panel">
+                <h5><i class="fas fa-wallet"></i> Wallet Balance</h5>
+                <div class="balance-display">
+                    <div class="balance-label">Total Value</div>
+                    <div class="balance-value" id="total-portfolio-value">$5,450.00</div>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">BTC</span>
+                    <span class="info-value" id="portfolio-btc">0.100000</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">USDT</span>
+                    <span class="info-value" id="portfolio-usdt">$950.00</span>
+                </div>
+                <div class="portfolio-chart-container">
+                    <canvas id="portfolioChart"></canvas>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h5><i class="fas fa-chart-line"></i> Current Position</h5>
+                <div id="pnlContainer">
+                    <div class="info-row">
+                        <span class="info-label">Entry Price</span>
+                        <span class="info-value" id="entry-price">$44,000.00</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Current Price</span>
+                        <span class="info-value" id="current-position-price">$45,000.00</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Unrealized P&L</span>
+                        <span class="info-value pnl-positive" id="unrealized-pnl">+$100.00 (+2.27%)</span>
+                    </div>
+                    <div class="if-sold-now">
+                        <div class="label">If Sold Now</div>
+                        <div class="value" id="if-sold-value">$4,600.00</div>
+                    </div>
+                </div>
+                <button class="btn btn-trade-sell w-100" onclick="quickSell()">
+                    <i class="fas fa-hand-holding-usd"></i> Quick Sell Position
+                </button>
+            </div>
+
+            <div class="panel">
+                <h5><i class="fas fa-chart-pie"></i> Today's Results</h5>
+                <div class="text-muted">Coming soon...</div>
             </div>
         </div>
     </div>
