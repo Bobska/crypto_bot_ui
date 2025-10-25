@@ -80,14 +80,16 @@ body::before {
    TERMINAL HEADER (MCRN Style)
    =================================== */
 .terminal-header {
-    position: sticky;
-    top: 0;
-    z-index: 1000;
     background: var(--bg-panel);
     border: 1px solid var(--border-primary);
-    padding: 20px 30px;
+    padding: 16px 24px;
     backdrop-filter: blur(10px);
     position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 8px 8px 0 8px;
+    border-radius: 0;
 }
 
 /* Corner brackets for header */
@@ -95,23 +97,24 @@ body::before {
 .terminal-header::after {
     content: '';
     position: absolute;
-    width: 30px;
-    height: 30px;
+    width: 20px;
+    height: 20px;
     border: 2px solid var(--border-corner);
+    z-index: 1;
 }
 
 .terminal-header::before {
-    top: -1px;
-    left: -1px;
+    top: 0;
+    left: 0;
     border-right: none;
     border-bottom: none;
 }
 
 .terminal-header::after {
-    top: -1px;
-    right: -1px;
+    bottom: 0;
+    right: 0;
     border-left: none;
-    border-bottom: none;
+    border-top: none;
 }
 
 .terminal-header .header-left {
@@ -185,7 +188,7 @@ body::before {
    CARD STYLING (MCRN Panels)
    =================================== */
 
-/* Cards inside panels - lighter styling */
+/* Cards inside panels - lighter styling, NO corner brackets */
 .bot-status-card, .wallet-card, .position-card, .results-card {
     background: rgba(10, 15, 25, 0.3);
     border: 1px solid rgba(0, 217, 255, 0.15);
@@ -194,6 +197,7 @@ body::before {
     position: relative;
     backdrop-filter: blur(5px);
     margin-bottom: 12px;
+    transition: all 0.2s ease;
 }
 
 .bot-status-card:last-child, 
@@ -201,6 +205,14 @@ body::before {
 .position-card:last-child, 
 .results-card:last-child {
     margin-bottom: 0;
+}
+
+.bot-status-card:hover,
+.wallet-card:hover,
+.position-card:hover,
+.results-card:hover {
+    border-color: rgba(0, 217, 255, 0.3);
+    background: rgba(10, 15, 25, 0.4);
 }
 
 /* Trade history section - inside center panel */
@@ -213,34 +225,7 @@ body::before {
     margin-top: 8px;
 }
 
-/* Smaller corner brackets for cards inside panels */
-.bot-status-card::before, .bot-status-card::after,
-.wallet-card::before, .wallet-card::after,
-.position-card::before, .position-card::after,
-.results-card::before, .results-card::after {
-    content: '';
-    position: absolute;
-    width: 8px;
-    height: 8px;
-    border: 1px solid rgba(0, 217, 255, 0.3);
-    pointer-events: none;
-}
-
-.bot-status-card::before, .wallet-card::before, .position-card::before, 
-.results-card::before {
-    top: 0;
-    left: 0;
-    border-right: none;
-    border-bottom: none;
-}
-
-.bot-status-card::after, .wallet-card::after, .position-card::after,
-.results-card::after {
-    bottom: 0;
-    right: 0;
-    border-left: none;
-    border-top: none;
-}
+/* NO corner brackets for inner cards - removed all ::before and ::after */
 
 .card-title, .section-title {
     font-size: 11px;
@@ -254,12 +239,6 @@ body::before {
     font-family: 'Courier New', monospace;
 }
 
-.bot-status-card:hover, 
-.wallet-card:hover, .position-card:hover, .results-card:hover {
-    border-color: rgba(0, 217, 255, 0.4);
-    box-shadow: 0 0 10px rgba(0, 217, 255, 0.15);
-}
-
 /* ===================================
    BUTTON STYLING (MCRN Style)
    =================================== */
@@ -268,9 +247,9 @@ body::before {
     background: var(--bg-panel);
     border: 1px solid var(--border-primary);
     border-radius: 0;
-    padding: 10px 20px;
+    padding: 8px 16px;
     font-family: 'Courier New', monospace;
-    font-size: 11px;
+    font-size: 10px;
     letter-spacing: 2px;
     text-transform: uppercase;
     color: var(--text-primary);
@@ -283,6 +262,14 @@ body::before {
     background: rgba(0, 217, 255, 0.1);
     border-color: var(--border-corner);
     box-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
+}
+
+/* Timeframe button group styling */
+.timeframe-controls {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
 }
 
 .btn-buy, .btn-trade-buy {
@@ -958,14 +945,14 @@ body, html {
 
 .terminal-grid {
     display: grid;
-    grid-template-columns: 280px 1fr 350px; /* left | center | right */
+    grid-template-columns: 300px 1fr 350px; /* left | center | right */
     grid-template-rows: 1fr;
     gap: 12px;
     /* Fill the remaining space below the header */
     flex: 1 1 auto;
     min-height: 0; /* allow children to manage their own scroll */
     overflow: hidden; /* no scrolling on main view */
-    padding: 8px 0 16px 0;
+    padding: 8px;
 }
 
 .left-panel, .center-panel, .right-panel {
@@ -973,7 +960,7 @@ body, html {
     background: var(--bg-panel); /* MCRN panel background */
     border: 1px solid var(--border-primary); /* MCRN border */
     border-radius: 0;
-    padding: 14px;
+    padding: 20px;
     backdrop-filter: blur(10px);
     position: relative;
     overflow-y: auto; /* Allow scrolling if content exceeds */
@@ -1018,6 +1005,7 @@ body, html {
     flex-direction: column;
     min-height: 0;
     overflow: hidden; /* Don't scroll the center panel itself */
+    padding: 16px; /* Reduced padding for better space usage */
 }
 
 .chart-section {
@@ -1035,7 +1023,7 @@ body, html {
     background: rgba(10, 15, 25, 0.3);
     border: 1px solid rgba(0, 217, 255, 0.15);
     border-radius: 0;
-    padding: 10px;
+    padding: 12px;
     margin-top: 8px;
 }
 
@@ -1061,12 +1049,11 @@ body, html {
     position: relative;
     flex: 1 1 auto;
     min-height: 0;
-    background: var(--bg-panel);
+    background: rgba(10, 15, 25, 0.2);
     border-radius: 0;
-    border: 1px solid var(--border-primary);
-    margin: 10px;
+    border: 1px solid rgba(0, 217, 255, 0.15);
     overflow: hidden;
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(5px);
 }
 
 .chart-host #tradingChart {
@@ -1808,8 +1795,20 @@ body, html {
 }
 
 /* Responsive adjustments */
+@media (max-width: 1600px) {
+    .terminal-grid { 
+        grid-template-columns: 280px 1fr 320px; 
+    }
+    
+    .left-panel, .center-panel, .right-panel {
+        padding: 16px;
+    }
+}
+
 @media (max-width: 1440px) {
-    .terminal-grid { grid-template-columns: 250px 1fr 300px; }
+    .terminal-grid { 
+        grid-template-columns: 260px 1fr 300px; 
+    }
 }
 
 @media (max-width: 1200px) {
@@ -1818,5 +1817,12 @@ body, html {
         grid-template-rows: auto auto auto;
         height: auto;
     }
-    .left-panel, .right-panel { max-width: 100%; }
+    
+    .left-panel, .right-panel { 
+        max-width: 100%; 
+    }
+    
+    .center-panel {
+        min-height: 600px;
+    }
 }
