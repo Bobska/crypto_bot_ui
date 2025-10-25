@@ -59,7 +59,7 @@
     <!-- New Grid Layout -->
     <div class="terminal-grid">
         <!-- Left Column: Bot Control Panel -->
-        <div class="left-panel">
+        <div class="left-panel panel">
             <!-- Phase 3: New Bot Status Card -->
             <div class="bot-status-card">
                 <div class="bot-status-header">
@@ -180,10 +180,10 @@
                 </div>
             </div>
             -->
-        </div>
+        </div><!-- END left-panel -->
 
         <!-- Center Column: Chart (70%) + Trade History (30%) -->
-        <div class="center-panel">
+        <div class="center-panel panel">
             <div class="chart-section">
                 <div class="timeframe-controls btn-group" role="group">
                     <button type="button" class="btn btn-sm timeframe-btn" data-timeframe="1m">1M</button>
@@ -214,10 +214,10 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div><!-- END center-panel -->
 
         <!-- Right Column: Wallet, Position, Today's Results -->
-        <div class="right-panel">
+        <div class="right-panel panel">
             <!-- PHASE 4.1: Wallet Balance Card -->
             <div class="wallet-card">
                 <h3 class="card-title">💰 WALLET BALANCE</h3>
@@ -268,8 +268,8 @@
                     <span class="value profit-value" id="todayProfit">$0.00</span>
                 </div>
             </div>
-        </div>
-    </div>
+        </div><!-- END right-panel -->
+    </div><!-- END terminal-grid -->
 </div>
 
 <script>

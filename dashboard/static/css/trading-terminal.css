@@ -184,66 +184,80 @@ body::before {
 /* ===================================
    CARD STYLING (MCRN Panels)
    =================================== */
-.trading-card, .panel, 
-.bot-status-card, .wallet-card, .position-card, .results-card,
-.trade-history-section {
-    background: var(--bg-panel);
-    border: 1px solid var(--border-primary);
+
+/* Cards inside panels - lighter styling */
+.bot-status-card, .wallet-card, .position-card, .results-card {
+    background: rgba(10, 15, 25, 0.3);
+    border: 1px solid rgba(0, 217, 255, 0.15);
     border-radius: 0;
-    padding: 30px;
+    padding: 16px;
     position: relative;
-    backdrop-filter: blur(10px);
-    margin-bottom: 20px;
+    backdrop-filter: blur(5px);
+    margin-bottom: 12px;
 }
 
-/* Corner brackets for all panels */
+.bot-status-card:last-child, 
+.wallet-card:last-child, 
+.position-card:last-child, 
+.results-card:last-child {
+    margin-bottom: 0;
+}
+
+/* Trade history section - inside center panel */
+.trade-history-section {
+    background: rgba(10, 15, 25, 0.3);
+    border: 1px solid rgba(0, 217, 255, 0.15);
+    border-radius: 0;
+    padding: 15px;
+    position: relative;
+    margin-top: 8px;
+}
+
+/* Smaller corner brackets for cards inside panels */
 .bot-status-card::before, .bot-status-card::after,
 .wallet-card::before, .wallet-card::after,
 .position-card::before, .position-card::after,
-.results-card::before, .results-card::after,
-.trade-history-section::before, .trade-history-section::after,
-.panel::before, .panel::after {
+.results-card::before, .results-card::after {
     content: '';
     position: absolute;
-    width: 25px;
-    height: 25px;
-    border: 2px solid var(--border-corner);
+    width: 8px;
+    height: 8px;
+    border: 1px solid rgba(0, 217, 255, 0.3);
     pointer-events: none;
 }
 
 .bot-status-card::before, .wallet-card::before, .position-card::before, 
-.results-card::before, .trade-history-section::before, .panel::before {
-    top: -1px;
-    left: -1px;
+.results-card::before {
+    top: 0;
+    left: 0;
     border-right: none;
     border-bottom: none;
 }
 
 .bot-status-card::after, .wallet-card::after, .position-card::after,
-.results-card::after, .trade-history-section::after, .panel::after {
-    top: -1px;
-    right: -1px;
+.results-card::after {
+    bottom: 0;
+    right: 0;
     border-left: none;
-    border-bottom: none;
+    border-top: none;
 }
 
-/* Bottom corners - using extra pseudo elements via nested spans if needed, or rely on visual hierarchy */
-
-.card-title, .panel-header, .section-title {
-    font-size: 14px;
-    letter-spacing: 3px;
+.card-title, .section-title {
+    font-size: 11px;
+    letter-spacing: 2px;
     text-transform: uppercase;
-    color: var(--text-primary);
-    margin: 0 0 20px 0;
-    padding-bottom: 15px;
-    border-bottom: 1px solid var(--border-primary);
+    color: rgba(255, 255, 255, 0.5);
+    margin: 0 0 15px 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(0, 217, 255, 0.1);
     font-weight: normal;
+    font-family: 'Courier New', monospace;
 }
 
-.trading-card:hover, .panel:hover,
+.bot-status-card:hover, 
 .wallet-card:hover, .position-card:hover, .results-card:hover {
-    box-shadow: 0 0 20px rgba(0, 217, 255, 0.2);
     border-color: rgba(0, 217, 255, 0.4);
+    box-shadow: 0 0 10px rgba(0, 217, 255, 0.15);
 }
 
 /* ===================================
@@ -956,15 +970,46 @@ body, html {
 
 .left-panel, .center-panel, .right-panel {
     min-height: 0; /* allow flex children to size */
-}
-
-.panel {
     background: var(--bg-panel); /* MCRN panel background */
     border: 1px solid var(--border-primary); /* MCRN border */
     border-radius: 0;
     padding: 14px;
-    margin-bottom: 12px;
     backdrop-filter: blur(10px);
+    position: relative;
+    overflow-y: auto; /* Allow scrolling if content exceeds */
+}
+
+/* Corner brackets for main panels */
+.left-panel::before,
+.left-panel::after,
+.center-panel::before,
+.center-panel::after,
+.right-panel::before,
+.right-panel::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-corner);
+    z-index: 1;
+}
+
+.left-panel::before,
+.center-panel::before,
+.right-panel::before {
+    top: 0;
+    left: 0;
+    border-right: none;
+    border-bottom: none;
+}
+
+.left-panel::after,
+.center-panel::after,
+.right-panel::after {
+    bottom: 0;
+    right: 0;
+    border-left: none;
+    border-top: none;
 }
 
 /* Center Panel: Chart + History Split */
@@ -972,6 +1017,7 @@ body, html {
     display: flex;
     flex-direction: column;
     min-height: 0;
+    overflow: hidden; /* Don't scroll the center panel itself */
 }
 
 .chart-section {
@@ -986,11 +1032,11 @@ body, html {
     flex: 3 1 30%;
     min-height: 0;
     overflow-y: auto; /* table scrolls, grid stays fixed */
-    background: var(--bg-panel);
-    border: 1px solid var(--border-primary);
+    background: rgba(10, 15, 25, 0.3);
+    border: 1px solid rgba(0, 217, 255, 0.15);
     border-radius: 0;
     padding: 10px;
-    backdrop-filter: blur(10px);
+    margin-top: 8px;
 }
 
 /* Timeframe Controls */
@@ -1417,39 +1463,7 @@ body, html {
    PHASE 3: BOT STATUS CARD (MCRN Style)
    =================================== */
 
-.bot-status-card {
-    background: var(--bg-panel);
-    border: 1px solid var(--border-primary);
-    border-radius: 0;
-    padding: 20px;
-    margin-bottom: 12px;
-    backdrop-filter: blur(10px);
-    position: relative;
-}
-
-/* Corner brackets for bot status card */
-.bot-status-card::before,
-.bot-status-card::after {
-    content: '';
-    position: absolute;
-    width: 15px;
-    height: 15px;
-    border: 2px solid var(--border-corner);
-}
-
-.bot-status-card::before {
-    top: 0;
-    left: 0;
-    border-right: none;
-    border-bottom: none;
-}
-
-.bot-status-card::after {
-    top: 0;
-    right: 0;
-    border-left: none;
-    border-bottom: none;
-}
+/* bot-status-card base styling is now in CARD STYLING section above */
 
 .bot-status-header {
     display: flex;
@@ -1563,50 +1577,7 @@ body, html {
    PHASE 4: RIGHT PANEL CARDS (MCRN Style)
    =================================== */
 
-.wallet-card,
-.position-card,
-.results-card {
-    background: var(--bg-panel);
-    border-radius: 0;
-    border: 1px solid var(--border-primary);
-    padding: 15px;
-    margin-bottom: 12px;
-    backdrop-filter: blur(10px);
-    transition: all 0.2s ease;
-    position: relative;
-}
-
-/* Corner brackets for right panel cards */
-.wallet-card::before,
-.wallet-card::after,
-.position-card::before,
-.position-card::after,
-.results-card::before,
-.results-card::after {
-    content: '';
-    position: absolute;
-    width: 10px;
-    height: 10px;
-    border: 2px solid var(--border-corner);
-}
-
-.wallet-card::before,
-.position-card::before,
-.results-card::before {
-    top: 0;
-    left: 0;
-    border-right: none;
-    border-bottom: none;
-}
-
-.wallet-card::after,
-.position-card::after,
-.results-card::after {
-    bottom: 0;
-    right: 0;
-    border-left: none;
-    border-top: none;
-}
+/* wallet-card, position-card, results-card base styling is now in CARD STYLING section above */
 
 .card-title {
     font-size: 11px;
@@ -1741,13 +1712,8 @@ body, html {
 /* ===================================
    PHASE 5: TRADE HISTORY TABLE (MCRN Style)
    =================================== */
-.trade-history-section {
-    background: var(--bg-panel);
-    border-radius: 0;
-    padding: 15px;
-    border: 1px solid var(--border-primary);
-    backdrop-filter: blur(10px);
-}
+
+/* trade-history-section base styling is now in CARD STYLING section above */
 
 .trade-history-section .section-title {
     margin: 0 0 12px 0;
