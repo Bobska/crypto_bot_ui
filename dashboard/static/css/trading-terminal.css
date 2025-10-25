@@ -51,6 +51,9 @@ body {
 .container-fluid {
     padding-left: 0 !important;
     padding-right: 0 !important;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* fill viewport height under fixed navbar (body has top padding) */
 }
 
 /* ===================================
@@ -826,7 +829,9 @@ body, html {
     grid-template-columns: 280px 1fr 350px; /* left | center | right */
     grid-template-rows: 1fr;
     gap: 12px;
-    height: calc(100vh - 140px); /* viewport minus header approx */
+    /* Fill the remaining space below the header */
+    flex: 1 1 auto;
+    min-height: 0; /* allow children to manage their own scroll */
     overflow: hidden; /* no scrolling on main view */
     padding: 8px 0 16px 0;
 }
