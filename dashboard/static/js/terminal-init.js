@@ -573,6 +573,60 @@ const TerminalInit = {
             const sellTarget = (this.position.entry_price * 1.01).toFixed(2);
             targetEl.textContent = `$${sellTarget}`;
         }
+
+        // ===== PHASE 3: Update new bot status card elements =====
+        
+        // Update bot status text and indicator
+        const botStatusText = document.getElementById('botStatusText');
+        const botStatusDot = document.getElementById('botStatusDot');
+        const botRunning = statusData?.bot_running !== false; // default to running if no data
+        
+        if (botStatusText) {
+            botStatusText.textContent = botRunning ? 'BOT RUNNING' : 'BOT STOPPED';
+        }
+        if (botStatusDot) {
+            botStatusDot.classList.toggle('inactive', !botRunning);
+        }
+
+        // Update position info
+        const botPosition = document.getElementById('botPosition');
+        const botEntry = document.getElementById('botEntry');
+        const botTarget = document.getElementById('botTarget');
+        
+        if (this.position) {
+            if (botPosition) {
+                botPosition.textContent = this.position.has_position ? 'LONG BTC' : 'USDT';
+                botPosition.style.color = this.position.has_position ? '#22c55e' : '#9ca3af';
+            }
+            
+            if (botEntry) {
+                if (this.position.has_position && this.position.entry_price) {
+                    botEntry.textContent = `$${this.position.entry_price.toFixed(2)}`;
+                } else {
+                    botEntry.textContent = '--';
+                }
+            }
+            
+            if (botTarget) {
+                if (this.position.has_position && this.position.entry_price) {
+                    const sellTarget = (this.position.entry_price * 1.01).toFixed(2);
+                    botTarget.textContent = `$${sellTarget}`;
+                } else {
+                    botTarget.textContent = '--';
+                }
+            }
+        }
+
+        // Update next action text
+        const nextActionText = document.getElementById('nextActionText');
+        if (nextActionText && this.position) {
+            if (this.position.has_position) {
+                const sellTarget = (this.position.entry_price * 1.01).toFixed(2);
+                nextActionText.textContent = `Waiting to SELL at $${sellTarget} (+1%)`;
+            } else {
+                nextActionText.textContent = 'Monitoring for BUY opportunity...';
+            }
+        }
     },
 
     /**

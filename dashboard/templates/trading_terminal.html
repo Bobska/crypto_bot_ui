@@ -79,26 +79,36 @@
     <div class="terminal-grid">
         <!-- Left Column: Bot Control Panel -->
         <div class="left-panel">
-            <div class="panel">
-                <h5 class="mb-3">
-                    <span class="status-indicator active" id="bot-status-indicator"></span>
-                    Bot Status
-                </h5>
-                <div class="info-row">
-                    <span class="info-label">Strategy</span>
-                    <span class="info-value">Grid Trading</span>
+            <!-- Phase 3: New Bot Status Card -->
+            <div class="bot-status-card">
+                <div class="bot-status-header">
+                    <span class="status-indicator" id="botStatusDot">●</span>
+                    <span id="botStatusText">BOT RUNNING</span>
                 </div>
-                <div class="info-row">
-                    <span class="info-label">Next Action</span>
-                    <span class="info-value" id="next-action">SELL at $46,000</span>
+                
+                <div class="bot-info">
+                    <div class="info-row">
+                        <span class="label">Position:</span>
+                        <span class="value" id="botPosition">USDT</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Entry:</span>
+                        <span class="value" id="botEntry">--</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Target:</span>
+                        <span class="value" id="botTarget">--</span>
+                    </div>
                 </div>
-                <div class="info-row">
-                    <span class="info-label">Target Price</span>
-                    <span class="info-value" id="target-price">$46,000.00</span>
+                
+                <div class="next-action-box">
+                    <div class="next-action-title">⏳ NEXT ACTION</div>
+                    <div class="next-action-text" id="nextActionText">Waiting...</div>
                 </div>
-                <button class="btn btn-bot-control w-100 mt-3" id="bot-toggle-btn" onclick="toggleBot()">
-                    <i class="fas fa-pause"></i> Pause Bot
-                </button>
+                
+                <div class="bot-controls">
+                    <button class="btn-stop" id="stopBotBtn" onclick="toggleBot()">⏸ STOP BOT</button>
+                </div>
             </div>
 
             <div class="panel">
@@ -354,19 +364,41 @@ function holdPosition() {
 }
 
 function toggleBot() {
+    // Update new bot status card elements (Phase 3)
+    const botStatusDot = document.getElementById('botStatusDot');
+    const botStatusText = document.getElementById('botStatusText');
+    const stopBotBtn = document.getElementById('stopBotBtn');
+    
+    // Check current state from dot
+    const isActive = !botStatusDot.classList.contains('inactive');
+    
+    if (isActive) {
+        // Stop the bot
+        botStatusDot.classList.add('inactive');
+        if (botStatusText) botStatusText.textContent = 'BOT STOPPED';
+        if (stopBotBtn) stopBotBtn.innerHTML = '▶ START BOT';
+        showNotification('Bot Stopped', 'Trading bot has been stopped', 'warning');
+    } else {
+        // Start the bot
+        botStatusDot.classList.remove('inactive');
+        if (botStatusText) botStatusText.textContent = 'BOT RUNNING';
+        if (stopBotBtn) stopBotBtn.innerHTML = '⏸ STOP BOT';
+        showNotification('Bot Started', 'Trading bot is now active', 'success');
+    }
+    
+    // Also update old elements if they exist (for backward compatibility)
     const indicator = document.getElementById('bot-status-indicator');
     const button = document.getElementById('bot-toggle-btn');
-    
-    if (indicator.classList.contains('active')) {
-        indicator.classList.remove('active');
-        indicator.classList.add('inactive');
-        button.innerHTML = '<i class="fas fa-play"></i> Resume Bot';
-        showNotification('Bot Paused', 'Trading bot has been paused', 'warning');
-    } else {
-        indicator.classList.remove('inactive');
-        indicator.classList.add('active');
-        button.innerHTML = '<i class="fas fa-pause"></i> Pause Bot';
-        showNotification('Bot Resumed', 'Trading bot is now active', 'success');
+    if (indicator && button) {
+        if (isActive) {
+            indicator.classList.remove('active');
+            indicator.classList.add('inactive');
+            button.innerHTML = '<i class="fas fa-play"></i> Resume Bot';
+        } else {
+            indicator.classList.remove('inactive');
+            indicator.classList.add('active');
+            button.innerHTML = '<i class="fas fa-pause"></i> Pause Bot';
+        }
     }
 }
 

@@ -1230,3 +1230,112 @@ body, html {
     color: #f3f4f6;
     font-weight: 500;
 }
+
+/* ===================================
+   PHASE 3: BOT STATUS CARD
+   =================================== */
+
+.bot-status-card {
+    background: #252d3d;
+    border: 2px solid #3b82f6;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 12px;
+}
+
+.bot-status-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #f3f4f6;
+}
+
+.bot-status-card .status-indicator {
+    font-size: 20px;
+    line-height: 1;
+    color: #22c55e; /* Green when running */
+}
+
+.bot-status-card .status-indicator.inactive {
+    color: #6b7280; /* Gray when stopped */
+}
+
+.bot-info {
+    margin-bottom: 16px;
+}
+
+.bot-info .info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #1e293b;
+}
+
+.bot-info .info-row:last-child {
+    border-bottom: none;
+}
+
+.bot-info .label {
+    color: #9ca3af;
+    font-size: 13px;
+}
+
+.bot-info .value {
+    color: #f3f4f6;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.next-action-box {
+    background: #1e293b;
+    border-left: 3px solid #f59e0b;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 16px;
+}
+
+.next-action-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #f59e0b;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
+.next-action-text {
+    font-size: 13px;
+    color: #e5e7eb;
+    line-height: 1.4;
+}
+
+.bot-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-stop {
+    background: #ef4444;
+    border: none;
+    color: white;
+    font-weight: 600;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    width: 100%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-stop:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+.btn-stop:active {
+    transform: translateY(0);
+}
