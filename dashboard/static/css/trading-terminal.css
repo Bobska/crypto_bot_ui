@@ -1,37 +1,57 @@
 /**
- * Trading Terminal - Professional Dark Theme
- * Color Palette & Design System
+ * Trading Terminal - MCRN Command Interface Theme
+ * Sci-Fi Military Command Interface Design
  */
 
 :root {
-    /* Color Palette */
-    --bg-primary: #0e0e1a;
-    --bg-card: #1a1a2e;
-    --bg-accent: #16213e;
-    --text-primary: #ffffff;
-    --text-secondary: #a0a0b0;
-    --color-success: #2ecc71;
-    --color-danger: #e74c3c;
-    --color-warning: #f39c12;
-    --color-info: #3498db;
+    /* Color Palette - MCRN Theme */
+    --color-primary: #00d9ff;
+    --color-success: #00ff88;
+    --color-danger: #ff5252;
+    --color-warning: #ffaa00;
+    
+    /* Background */
+    --bg-gradient: linear-gradient(135deg, #0a0d15 0%, #1a1d2e 50%, #0f1419 100%);
+    --bg-panel: rgba(10, 15, 25, 0.4);
+    --border-primary: rgba(0, 217, 255, 0.25);
+    --border-corner: rgba(0, 217, 255, 0.4);
+    
+    /* Text */
+    --text-primary: #00d9ff;
+    --text-secondary: rgba(0, 217, 255, 0.7);
+    --text-muted: rgba(0, 217, 255, 0.5);
     
     /* Shadows */
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
-    --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.3);
-    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.3);
-    --shadow-xl: 0 12px 48px rgba(0, 0, 0, 0.4);
-    
-    /* Transitions */
-    --transition-fast: all 0.15s ease;
-    --transition-base: all 0.3s ease;
-    --transition-slow: all 0.5s ease;
+    --shadow-glow: 0 0 15px rgba(0, 217, 255, 0.5);
 }
 
 /* Global Overrides */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
 body {
-    background-color: var(--bg-primary) !important;
+    font-family: 'Courier New', monospace !important;
+    background: var(--bg-gradient) !important;
     color: var(--text-primary) !important;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Grid pattern overlay */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+        linear-gradient(rgba(0, 217, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 217, 255, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    pointer-events: none;
+    z-index: 0;
 }
 
 /* ===================================
@@ -57,180 +77,252 @@ body {
 }
 
 /* ===================================
-   TERMINAL HEADER (PHASE 6)
+   TERMINAL HEADER (MCRN Style)
    =================================== */
 .terminal-header {
     position: sticky;
     top: 0;
     z-index: 1000;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #1a1f2e;
-    padding: 15px 20px;
-    border-bottom: 2px solid #2a3441;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-primary);
+    padding: 20px 30px;
+    backdrop-filter: blur(10px);
+    position: relative;
+}
+
+/* Corner brackets for header */
+.terminal-header::before,
+.terminal-header::after {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    border: 2px solid var(--border-corner);
+}
+
+.terminal-header::before {
+    top: -1px;
+    left: -1px;
+    border-right: none;
+    border-bottom: none;
+}
+
+.terminal-header::after {
+    top: -1px;
+    right: -1px;
+    border-left: none;
+    border-bottom: none;
 }
 
 .terminal-header .header-left {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 15px;
 }
+
 .terminal-header .header-left h2 {
-    font-size: 18px;
+    font-size: 24px;
+    letter-spacing: 8px;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    text-shadow: var(--shadow-glow);
     margin: 0;
 }
-.terminal-header .divider { color: #94a3b8; }
-.terminal-header .symbol { color: #f59e0b; font-weight: 700; }
+
+.terminal-header .divider { 
+    color: var(--text-muted);
+    font-size: 18px;
+}
+
+.terminal-header .symbol { 
+    color: var(--text-primary);
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
 
 .terminal-header .header-right {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 20px;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
 }
+
 .terminal-header .current-price {
-    font-family: 'Roboto Mono', monospace;
+    font-family: 'Courier New', monospace;
     font-size: 20px;
     font-weight: 700;
-    transition: color 0.3s ease, transform 0.2s ease;
-}
-.terminal-header .connection-status { color: #22c55e; font-weight: 700; }
-
-/* ===================================
-   CARD STYLING
-   =================================== */
-.trading-card {
-    background: var(--bg-card);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    box-shadow: var(--shadow-lg);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    padding: 20px;
-    margin-bottom: 20px;
-    transition: var(--transition-base);
+    color: var(--color-success);
+    letter-spacing: 1px;
 }
 
-.trading-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-xl);
-    border-color: rgba(255, 255, 255, 0.15);
-}
-
-.trading-card-header {
+.terminal-header .connection-status { 
+    color: var(--text-secondary);
+    font-weight: 700;
+    letter-spacing: 1px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    gap: 8px;
 }
 
-.trading-card-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0;
+.terminal-header .connection-status::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--color-success);
+    border-radius: 50%;
+    animation: statusBlink 2s ease-in-out infinite;
 }
 
-.trading-card-subtitle {
-    font-size: 14px;
-    color: var(--text-secondary);
-    margin-top: 4px;
+@keyframes statusBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
 }
 
 /* ===================================
-   BUTTON STYLING
+   CARD STYLING (MCRN Panels)
    =================================== */
-.btn-buy {
-    background: linear-gradient(135deg, var(--color-success) 0%, #27ae60 100%);
-    border: none;
-    height: 48px;
-    width: 100%;
-    border-radius: 8px;
-    font-weight: bold;
-    font-size: 16px;
-    color: var(--text-primary);
+.trading-card, .panel, 
+.bot-status-card, .wallet-card, .position-card, .results-card,
+.trade-history-section {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-primary);
+    border-radius: 0;
+    padding: 30px;
+    position: relative;
+    backdrop-filter: blur(10px);
+    margin-bottom: 20px;
+}
+
+/* Corner brackets for all panels */
+.bot-status-card::before, .bot-status-card::after,
+.wallet-card::before, .wallet-card::after,
+.position-card::before, .position-card::after,
+.results-card::before, .results-card::after,
+.trade-history-section::before, .trade-history-section::after,
+.panel::before, .panel::after {
+    content: '';
+    position: absolute;
+    width: 25px;
+    height: 25px;
+    border: 2px solid var(--border-corner);
+    pointer-events: none;
+}
+
+.bot-status-card::before, .wallet-card::before, .position-card::before, 
+.results-card::before, .trade-history-section::before, .panel::before {
+    top: -1px;
+    left: -1px;
+    border-right: none;
+    border-bottom: none;
+}
+
+.bot-status-card::after, .wallet-card::after, .position-card::after,
+.results-card::after, .trade-history-section::after, .panel::after {
+    top: -1px;
+    right: -1px;
+    border-left: none;
+    border-bottom: none;
+}
+
+/* Bottom corners - using extra pseudo elements via nested spans if needed, or rely on visual hierarchy */
+
+.card-title, .panel-header, .section-title {
+    font-size: 14px;
+    letter-spacing: 3px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    transition: var(--transition-base);
-    box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
-}
-
-.btn-buy:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(46, 204, 113, 0.5);
-    animation: pulse 1.5s infinite;
-}
-
-.btn-buy:active {
-    transform: translateY(0);
-}
-
-.btn-sell {
-    background: linear-gradient(135deg, var(--color-danger) 0%, #c0392b 100%);
-    border: none;
-    height: 48px;
-    width: 100%;
-    border-radius: 8px;
-    font-weight: bold;
-    font-size: 16px;
     color: var(--text-primary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    transition: var(--transition-base);
-    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+    margin: 0 0 20px 0;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-primary);
+    font-weight: normal;
 }
 
-.btn-sell:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(231, 76, 60, 0.5);
-    animation: pulse 1.5s infinite;
-}
-
-.btn-sell:active {
-    transform: translateY(0);
-}
-
-.btn-secondary {
-    background: var(--color-info);
-    border: none;
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-weight: 600;
-    color: var(--text-primary);
-    transition: var(--transition-base);
-}
-
-.btn-secondary:hover {
-    background: #2980b9;
-    transform: translateY(-1px);
-}
-
-.btn-outline-secondary {
-    background: transparent;
-    border: 2px solid var(--color-info);
-    color: var(--color-info);
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-weight: 600;
-    transition: var(--transition-base);
-}
-
-.btn-outline-secondary:hover {
-    background: var(--color-info);
-    color: var(--text-primary);
+.trading-card:hover, .panel:hover,
+.wallet-card:hover, .position-card:hover, .results-card:hover {
+    box-shadow: 0 0 20px rgba(0, 217, 255, 0.2);
+    border-color: rgba(0, 217, 255, 0.4);
 }
 
 /* ===================================
-   PRICE DISPLAY
+   BUTTON STYLING (MCRN Style)
+   =================================== */
+.btn, .btn-buy, .btn-sell, .btn-stop, .btn-secondary, 
+.btn-outline-secondary, .timeframe-btn {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-primary);
+    border-radius: 0;
+    padding: 10px 20px;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: normal;
+}
+
+.btn:hover, .timeframe-btn:hover {
+    background: rgba(0, 217, 255, 0.1);
+    border-color: var(--border-corner);
+    box-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
+}
+
+.btn-buy, .btn-trade-buy {
+    color: var(--color-success) !important;
+    border-color: rgba(0, 255, 136, 0.4);
+}
+
+.btn-buy:hover, .btn-trade-buy:hover {
+    background: rgba(0, 255, 136, 0.1);
+    border-color: var(--color-success);
+    box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+}
+
+.btn-sell, .btn-trade-sell {
+    color: var(--color-danger) !important;
+    border-color: rgba(255, 82, 82, 0.4);
+}
+
+.btn-sell:hover, .btn-trade-sell:hover {
+    background: rgba(255, 82, 82, 0.1);
+    border-color: var(--color-danger);
+    box-shadow: 0 0 10px rgba(255, 82, 82, 0.3);
+}
+
+.btn-stop {
+    background: var(--bg-panel);
+    border: 1px solid rgba(255, 82, 82, 0.4);
+    color: var(--color-danger);
+}
+
+.btn-stop:hover {
+    background: rgba(255, 82, 82, 0.1);
+    border-color: var(--color-danger);
+    box-shadow: 0 0 10px rgba(255, 82, 82, 0.3);
+}
+
+.timeframe-btn.active {
+    background: rgba(0, 217, 255, 0.2);
+    color: var(--text-primary);
+    border-color: var(--text-primary);
+    box-shadow: 0 0 15px rgba(0, 217, 255, 0.4);
+}
+
+/* ===================================
+   PRICE DISPLAY (MCRN Style)
    =================================== */
 .price-large {
     font-size: 32px;
-    font-weight: 700;
-    font-family: 'Roboto Mono', monospace;
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
     color: var(--text-primary);
-    transition: var(--transition-fast);
+    letter-spacing: 2px;
+    text-shadow: 0 0 15px rgba(0, 217, 255, 0.5);
+    transition: all 0.2s ease;
 }
 
 .price-flash-up {
@@ -242,22 +334,35 @@ body {
 }
 
 @keyframes flashGreen {
-    0%, 100% { color: var(--text-primary); }
-    50% { color: var(--color-success); text-shadow: 0 0 20px var(--color-success); }
+    0%, 100% { 
+        color: var(--text-primary); 
+        text-shadow: 0 0 15px rgba(0, 217, 255, 0.5);
+    }
+    50% { 
+        color: var(--color-success); 
+        text-shadow: 0 0 20px var(--color-success); 
+    }
 }
 
 @keyframes flashRed {
-    0%, 100% { color: var(--text-primary); }
-    50% { color: var(--color-danger); text-shadow: 0 0 20px var(--color-danger); }
+    0%, 100% { 
+        color: var(--text-primary); 
+        text-shadow: 0 0 15px rgba(0, 217, 255, 0.5);
+    }
+    50% { 
+        color: var(--color-danger); 
+        text-shadow: 0 0 20px var(--color-danger); 
+    }
 }
 
 /* ===================================
-   P&L INDICATORS
+   P&L INDICATORS (MCRN Style)
    =================================== */
 .pnl-positive {
     color: var(--color-success);
-    font-weight: bold;
-    text-shadow: 0 0 8px rgba(46, 204, 113, 0.4);
+    font-weight: normal;
+    letter-spacing: 1px;
+    text-shadow: 0 0 10px var(--color-success);
 }
 
 .pnl-positive::before {
@@ -267,8 +372,9 @@ body {
 
 .pnl-negative {
     color: var(--color-danger);
-    font-weight: bold;
-    animation: subtlePulse 2s infinite;
+    font-weight: normal;
+    letter-spacing: 1px;
+    text-shadow: 0 0 10px var(--color-danger);
 }
 
 .pnl-negative::before {
@@ -283,22 +389,25 @@ body {
 
 .pnl-display {
     font-size: 24px;
-    font-weight: 700;
-    font-family: 'Roboto Mono', monospace;
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 2px;
     padding: 12px;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0;
+    background: rgba(10, 15, 25, 0.4);
+    border: 1px solid var(--border-primary);
     text-align: center;
 }
 
 /* ===================================
-   CHART CONTAINER
+   CHART CONTAINER (MCRN Style)
    =================================== */
 .chart-container {
-    border-radius: 12px;
+    border-radius: 0;
     overflow: hidden;
-    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
-    background: var(--bg-accent);
+    background: rgba(10, 15, 25, 0.4);
+    border: 1px solid var(--border-primary);
+    backdrop-filter: blur(10px);
     width: 100%;
     height: 500px;
     position: relative;
@@ -313,25 +422,30 @@ body {
 
 .chart-timeframe-btn {
     padding: 6px 12px;
-    border-radius: 6px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--text-secondary);
-    font-size: 13px;
-    font-weight: 600;
+    border-radius: 0;
+    border: 1px solid var(--border-primary);
+    background: var(--bg-panel);
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 11px;
+    font-weight: normal;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+    text-transform: uppercase;
     cursor: pointer;
-    transition: var(--transition-fast);
+    transition: all 0.2s ease;
 }
 
 .chart-timeframe-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(0, 217, 255, 0.1);
     color: var(--text-primary);
+    border-color: var(--border-corner);
 }
 
 .chart-timeframe-btn.active {
-    background: var(--color-info);
+    background: rgba(0, 217, 255, 0.2);
     color: var(--text-primary);
-    border-color: var(--color-info);
+    border-color: var(--text-primary);
+    box-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
 }
 
 /* ===================================
@@ -394,62 +508,66 @@ body {
 }
 
 /* ===================================
-   ORDER HISTORY TABLE
+   ORDER HISTORY TABLE (MCRN Style)
    =================================== */
 .order-history-table {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
+    font-family: 'Courier New', monospace;
 }
 
 .order-history-table thead th {
-    background: var(--bg-accent);
-    color: var(--text-secondary);
-    font-weight: 600;
-    font-size: 13px;
+    background: rgba(10, 15, 25, 0.6);
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: normal;
+    font-size: 10px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1.5px;
     padding: 12px 16px;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--border-primary);
     position: sticky;
     top: 0;
 }
 
 .order-history-table tbody tr {
-    background: var(--bg-card);
-    transition: var(--transition-fast);
+    background: rgba(10, 15, 25, 0.2);
+    transition: all 0.2s ease;
     cursor: pointer;
+    border-bottom: 1px solid rgba(0, 217, 255, 0.1);
 }
 
 .order-history-table tbody tr:nth-child(4n+1),
 .order-history-table tbody tr:nth-child(4n+2) {
-    background: rgba(255, 255, 255, 0.02);
+    background: rgba(10, 15, 25, 0.3);
 }
 
 .order-history-table tbody tr:hover {
-    background: rgba(255, 255, 255, 0.05);
-    transform: translateX(4px);
+    background: rgba(0, 217, 255, 0.05);
+    border-bottom-color: var(--border-corner);
 }
 
 .order-history-table tbody td {
     padding: 12px 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(0, 217, 255, 0.1);
     color: var(--text-primary);
+    font-size: 11px;
+    letter-spacing: 1px;
 }
 
 .trade-row-win {
-    background: rgba(46, 204, 113, 0.08) !important;
-    border-left: 3px solid var(--color-success);
+    background: rgba(0, 255, 136, 0.05) !important;
+    border-left: 2px solid var(--color-success);
 }
 
 .trade-row-loss {
-    background: rgba(231, 76, 60, 0.08) !important;
-    border-left: 3px solid var(--color-danger);
+    background: rgba(255, 82, 82, 0.05) !important;
+    border-left: 2px solid var(--color-danger);
 }
 
 .trade-row-open {
-    background: rgba(160, 160, 176, 0.05) !important;
-    border-left: 3px solid var(--text-secondary);
+    background: rgba(0, 217, 255, 0.05) !important;
+    border-left: 2px solid var(--text-primary);
 }
 
 /* ===================================
@@ -587,7 +705,7 @@ body {
 }
 
 /* ===================================
-   SCROLLBAR STYLING
+   SCROLLBAR STYLING (MCRN Style)
    =================================== */
 ::-webkit-scrollbar {
     width: 8px;
@@ -595,23 +713,23 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-    background: var(--bg-primary);
+    background: rgba(10, 15, 25, 0.5);
 }
 
 ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 4px;
-    transition: var(--transition-base);
+    background: rgba(0, 217, 255, 0.3);
+    border-radius: 0;
+    transition: all 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(0, 217, 255, 0.5);
 }
 
 /* Firefox scrollbar */
 * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.2) var(--bg-primary);
+    scrollbar-color: rgba(0, 217, 255, 0.3) rgba(10, 15, 25, 0.5);
 }
 
 /* ===================================
@@ -815,13 +933,13 @@ body {
 }
 
 /* ===================================
-   PHASE 2: NEW GRID LAYOUT
+   PHASE 2: NEW GRID LAYOUT (MCRN Style)
    =================================== */
 
 /* Grid Layout System */
 body, html {
     height: 100%;
-    background: #0f1419; /* Dark theme background */
+    background: var(--bg-gradient); /* MCRN gradient background */
 }
 
 .terminal-grid {
@@ -841,11 +959,12 @@ body, html {
 }
 
 .panel {
-    background: #1a1f2e; /* panel background */
-    border: 1px solid #2a3441; /* panel border */
-    border-radius: 10px;
+    background: var(--bg-panel); /* MCRN panel background */
+    border: 1px solid var(--border-primary); /* MCRN border */
+    border-radius: 0;
     padding: 14px;
     margin-bottom: 12px;
+    backdrop-filter: blur(10px);
 }
 
 /* Center Panel: Chart + History Split */
@@ -867,23 +986,28 @@ body, html {
     flex: 3 1 30%;
     min-height: 0;
     overflow-y: auto; /* table scrolls, grid stays fixed */
-    background: #1a1f2e;
-    border: 1px solid #2a3441;
-    border-radius: 10px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-primary);
+    border-radius: 0;
     padding: 10px;
+    backdrop-filter: blur(10px);
 }
 
 /* Timeframe Controls */
 .timeframe-controls .timeframe-btn {
-    background: #1f2835;
-    border: 1px solid #2a3441;
-    color: #9ca3af;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-primary);
+    color: rgba(255, 255, 255, 0.5);
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+    text-transform: uppercase;
 }
 
 .timeframe-controls .timeframe-btn.active {
-    background: #3b82f6;
-    color: #fff;
-    border-color: #3b82f6;
+    background: rgba(0, 217, 255, 0.2);
+    color: var(--text-primary);
+    border-color: var(--text-primary);
+    box-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
 }
 
 /* Chart Container */
@@ -891,10 +1015,12 @@ body, html {
     position: relative;
     flex: 1 1 auto;
     min-height: 0;
-    background: #1a1f2e;
-    border-radius: 8px;
+    background: var(--bg-panel);
+    border-radius: 0;
+    border: 1px solid var(--border-primary);
     margin: 10px;
     overflow: hidden;
+    backdrop-filter: blur(10px);
 }
 
 .chart-host #tradingChart {
@@ -975,18 +1101,18 @@ body, html {
 }
 
 .terminal-card {
-    background: #1f2937;
-    border: 1px solid #374151;
-    border-radius: 12px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-primary);
+    border-radius: 0;
     padding: 20px;
     margin-bottom: 20px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    transition: all 0.2s ease;
 }
 
 .terminal-card:hover {
-    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.3);
-    border-color: #4b5563;
+    border-color: var(--border-corner);
+    box-shadow: 0 0 15px rgba(0, 217, 255, 0.2);
 }
 
 .terminal-card h5 {
@@ -1065,34 +1191,40 @@ body, html {
 }
 
 .btn-bot-control {
-    background: #3b82f6;
-    border: none;
-    color: white;
+    background: rgba(0, 217, 255, 0.2);
+    border: 1px solid var(--border-primary);
+    color: var(--text-primary);
     padding: 8px 16px;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    transition: all 0.3s ease;
+    border-radius: 0;
+    font-size: 11px;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: all 0.2s ease;
 }
 
 .btn-bot-control:hover {
-    background: #2563eb;
-    transform: translateY(-1px);
+    background: rgba(0, 217, 255, 0.3);
+    border-color: var(--border-corner);
+    box-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
 }
 
 .amount-selector {
-    background: #374151;
-    border: 1px solid #4b5563;
-    color: #f3f4f6;
+    background: rgba(10, 15, 25, 0.5);
+    border: 1px solid var(--border-primary);
+    color: var(--text-primary);
     padding: 10px;
-    border-radius: 8px;
+    border-radius: 0;
     margin-bottom: 15px;
     width: 100%;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
 }
 
 .amount-selector:focus {
     outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: var(--border-corner);
+    box-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
 }
 
 .timeframe-selector {
@@ -1125,25 +1257,29 @@ body, html {
 }
 
 .order-history-table {
-    font-size: 0.85rem;
-    color: #d1d5db;
+    font-size: 11px;
+    color: var(--text-primary);
+    font-family: 'Courier New', monospace;
 }
 
 .order-history-table th {
-    background: #374151;
-    color: #f3f4f6;
-    font-weight: 600;
+    background: rgba(10, 15, 25, 0.6);
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: normal;
     padding: 10px 8px;
     border: none;
+    letter-spacing: 1px;
+    text-transform: uppercase;
 }
 
 .order-history-table td {
     padding: 10px 8px;
-    border-bottom: 1px solid #374151;
+    border-bottom: 1px solid rgba(0, 217, 255, 0.1);
+    letter-spacing: 0.5px;
 }
 
 .order-history-table tr:hover {
-    background: #2d3748;
+    background: rgba(0, 217, 255, 0.05);
 }
 
 .portfolio-chart-container {
@@ -1152,58 +1288,73 @@ body, html {
 }
 
 .ai-message-box {
-    background: #374151;
-    border-radius: 8px;
+    background: rgba(10, 15, 25, 0.5);
+    border-radius: 0;
+    border: 1px solid var(--border-primary);
     padding: 12px;
     max-height: 120px;
     overflow-y: auto;
     margin: 10px 0;
-    font-size: 0.9rem;
+    font-size: 11px;
     line-height: 1.5;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.5px;
 }
 
 .confidence-bar {
     height: 8px;
-    background: #374151;
-    border-radius: 4px;
+    background: rgba(10, 15, 25, 0.5);
+    border-radius: 0;
+    border: 1px solid var(--border-primary);
     overflow: hidden;
     margin-top: 10px;
 }
 
 .confidence-fill {
     height: 100%;
-    background: linear-gradient(90deg, #22c55e 0%, #3b82f6 100%);
+    background: linear-gradient(90deg, var(--color-success) 0%, var(--color-primary) 100%);
     transition: width 0.5s ease;
+    box-shadow: 0 0 10px var(--color-primary);
 }
 
 .if-sold-now {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    background: rgba(0, 217, 255, 0.1);
+    border: 1px solid var(--border-primary);
     padding: 15px;
-    border-radius: 8px;
+    border-radius: 0;
     margin: 15px 0;
     text-align: center;
 }
 
 .if-sold-now .label {
-    font-size: 0.85rem;
-    color: #bfdbfe;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.5);
     margin-bottom: 5px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-family: 'Courier New', monospace;
 }
 
 .if-sold-now .value {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--text-primary);
+    font-family: 'Courier New', monospace;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
 }
 
 .risk-warning {
-    background: rgba(234, 179, 8, 0.1);
-    border: 1px solid #eab308;
-    color: #fbbf24;
+    background: rgba(243, 156, 18, 0.1);
+    border: 1px solid var(--color-warning);
+    color: var(--color-warning);
     padding: 10px;
-    border-radius: 6px;
-    font-size: 0.85rem;
+    border-radius: 0;
+    font-size: 10px;
     margin: 10px 0;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+    text-transform: uppercase;
 }
 
 .settings-dropdown {
@@ -1213,28 +1364,34 @@ body, html {
 }
 
 .balance-display {
-    background: #374151;
+    background: rgba(10, 15, 25, 0.5);
     padding: 12px;
-    border-radius: 8px;
+    border-radius: 0;
+    border: 1px solid var(--border-primary);
     margin: 10px 0;
 }
 
 .balance-label {
-    font-size: 0.85rem;
-    color: #9ca3af;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.5);
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
 }
 
 .balance-value {
-    font-size: 1.3rem;
-    font-weight: 600;
-    color: #f3f4f6;
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--text-primary);
+    font-family: 'Courier New', monospace;
+    letter-spacing: 2px;
 }
 
 .info-row {
     display: flex;
     justify-content: space-between;
     padding: 8px 0;
-    border-bottom: 1px solid #374151;
+    border-bottom: 1px solid rgba(0, 217, 255, 0.1);
 }
 
 .info-row:last-child {
@@ -1242,25 +1399,56 @@ body, html {
 }
 
 .info-label {
-    color: #9ca3af;
-    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 11px;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+    text-transform: uppercase;
 }
 
 .info-value {
-    color: #f3f4f6;
-    font-weight: 500;
+    color: var(--text-primary);
+    font-weight: normal;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
 }
 
 /* ===================================
-   PHASE 3: BOT STATUS CARD
+   PHASE 3: BOT STATUS CARD (MCRN Style)
    =================================== */
 
 .bot-status-card {
-    background: #252d3d;
-    border: 2px solid #3b82f6;
-    border-radius: 8px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-primary);
+    border-radius: 0;
     padding: 20px;
     margin-bottom: 12px;
+    backdrop-filter: blur(10px);
+    position: relative;
+}
+
+/* Corner brackets for bot status card */
+.bot-status-card::before,
+.bot-status-card::after {
+    content: '';
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    border: 2px solid var(--border-corner);
+}
+
+.bot-status-card::before {
+    top: 0;
+    left: 0;
+    border-right: none;
+    border-bottom: none;
+}
+
+.bot-status-card::after {
+    top: 0;
+    right: 0;
+    border-left: none;
+    border-bottom: none;
 }
 
 .bot-status-header {
@@ -1268,20 +1456,22 @@ body, html {
     align-items: center;
     gap: 10px;
     margin-bottom: 20px;
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    color: #f3f4f6;
+    font-size: 12px;
+    font-weight: normal;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    font-family: 'Courier New', monospace;
 }
 
 .bot-status-card .status-indicator {
     font-size: 20px;
     line-height: 1;
-    color: #22c55e; /* Green when running */
+    color: var(--color-success); /* Green when running */
 }
 
 .bot-status-card .status-indicator.inactive {
-    color: #6b7280; /* Gray when stopped */
+    color: rgba(255, 255, 255, 0.3); /* Dimmed when stopped */
 }
 
 .bot-info {
@@ -1292,7 +1482,7 @@ body, html {
     display: flex;
     justify-content: space-between;
     padding: 8px 0;
-    border-bottom: 1px solid #1e293b;
+    border-bottom: 1px solid rgba(0, 217, 255, 0.1);
 }
 
 .bot-info .info-row:last-child {
@@ -1300,36 +1490,45 @@ body, html {
 }
 
 .bot-info .label {
-    color: #9ca3af;
-    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 11px;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+    text-transform: uppercase;
 }
 
 .bot-info .value {
-    color: #f3f4f6;
-    font-weight: 600;
-    font-size: 13px;
+    color: var(--text-primary);
+    font-weight: normal;
+    font-size: 11px;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
 }
 
 .next-action-box {
-    background: #1e293b;
-    border-left: 3px solid #f59e0b;
-    border-radius: 6px;
+    background: rgba(10, 15, 25, 0.5);
+    border-left: 2px solid var(--color-warning);
+    border-radius: 0;
     padding: 12px;
     margin-bottom: 16px;
 }
 
 .next-action-title {
-    font-size: 11px;
-    font-weight: 700;
-    color: #f59e0b;
-    letter-spacing: 0.5px;
+    font-size: 10px;
+    font-weight: normal;
+    color: var(--color-warning);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
     margin-bottom: 6px;
+    font-family: 'Courier New', monospace;
 }
 
 .next-action-text {
-    font-size: 13px;
-    color: #e5e7eb;
+    font-size: 11px;
+    color: var(--text-primary);
     line-height: 1.4;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.5px;
 }
 
 .bot-controls {
@@ -1361,25 +1560,62 @@ body, html {
 }
 
 /* ===================================
-   PHASE 4: RIGHT PANEL CARDS
+   PHASE 4: RIGHT PANEL CARDS (MCRN Style)
    =================================== */
 
 .wallet-card,
 .position-card,
 .results-card {
-    background: #252d3d;
-    border-radius: 8px;
+    background: var(--bg-panel);
+    border-radius: 0;
+    border: 1px solid var(--border-primary);
     padding: 15px;
     margin-bottom: 12px;
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    backdrop-filter: blur(10px);
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+/* Corner brackets for right panel cards */
+.wallet-card::before,
+.wallet-card::after,
+.position-card::before,
+.position-card::after,
+.results-card::before,
+.results-card::after {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border: 2px solid var(--border-corner);
+}
+
+.wallet-card::before,
+.position-card::before,
+.results-card::before {
+    top: 0;
+    left: 0;
+    border-right: none;
+    border-bottom: none;
+}
+
+.wallet-card::after,
+.position-card::after,
+.results-card::after {
+    bottom: 0;
+    right: 0;
+    border-left: none;
+    border-top: none;
 }
 
 .card-title {
-    font-size: 14px;
-    color: #94a3b8;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
     margin: 0 0 15px 0;
-    font-weight: 700;
-    letter-spacing: 0.3px;
+    font-weight: normal;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-family: 'Courier New', monospace;
 }
 
 /* Wallet Balance */
@@ -1388,73 +1624,95 @@ body, html {
     justify-content: space-between;
     align-items: center;
     padding: 6px 0;
+    border-bottom: 1px solid rgba(0, 217, 255, 0.1);
 }
 
 .balance-row .currency {
-    color: #94a3b8;
-    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 11px;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
 }
 
 .balance-row .amount {
-    color: #ffffff;
-    font-weight: 600;
+    color: var(--text-primary);
+    font-weight: normal;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
 }
 
 .total-value {
     margin-top: 15px;
     padding-top: 15px;
-    border-top: 1px solid #3a4556;
+    border-top: 1px solid var(--border-primary);
 }
 
 .total-value .total-label {
-    color: #94a3b8;
-    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 10px;
     margin-bottom: 6px;
-    letter-spacing: 0.3px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-family: 'Courier New', monospace;
 }
 
 .total-value .total-amount {
-    font-size: 24px;
-    font-weight: 800;
-    color: #ffffff;
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--text-primary);
     line-height: 1.2;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
 }
 
 .total-value .total-note {
-    color: #94a3b8;
-    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 10px;
+    font-family: 'Courier New', monospace;
 }
 
 /* Position Card */
 .position-status {
-    font-size: 18px;
+    font-size: 14px;
     text-align: center;
     margin-bottom: 15px;
-    color: #e5e7eb;
+    color: var(--text-primary);
+    font-family: 'Courier New', monospace;
+    letter-spacing: 2px;
+    text-transform: uppercase;
 }
 
 .position-details .detail-row {
     display: flex;
     justify-content: space-between;
     padding: 6px 0;
+    border-bottom: 1px solid rgba(0, 217, 255, 0.1);
 }
 
 .position-details .label {
-    color: #94a3b8;
-    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 11px;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+    text-transform: uppercase;
 }
 
 .position-details .value {
-    color: #ffffff;
-    font-weight: 600;
+    color: var(--text-primary);
+    font-weight: normal;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
 }
 
 .profit-value.positive {
-    color: #22c55e;
+    color: var(--color-success);
+    text-shadow: 0 0 8px var(--color-success);
 }
 
 .profit-value.negative {
-    color: #ef4444;
+    color: var(--color-danger);
+    text-shadow: 0 0 8px var(--color-danger);
 }
 
 /* Today's Results */
@@ -1462,48 +1720,61 @@ body, html {
     display: flex;
     justify-content: space-between;
     padding: 6px 0;
+    border-bottom: 1px solid rgba(0, 217, 255, 0.1);
 }
 
 .results-card .label {
-    color: #94a3b8;
-    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 11px;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+    text-transform: uppercase;
 }
 
 .results-card .value {
-    color: #ffffff;
-    font-weight: 600;
+    color: var(--text-primary);
+    font-weight: normal;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
 }
 
 /* ===================================
-   PHASE 5: TRADE HISTORY TABLE
+   PHASE 5: TRADE HISTORY TABLE (MCRN Style)
    =================================== */
 .trade-history-section {
-    background: #1a1f2e;
-    border-radius: 8px;
+    background: var(--bg-panel);
+    border-radius: 0;
     padding: 15px;
-    border: 1px solid #2a3441;
+    border: 1px solid var(--border-primary);
+    backdrop-filter: blur(10px);
 }
 
 .trade-history-section .section-title {
     margin: 0 0 12px 0;
-    font-size: 14px;
-    color: #94a3b8;
-    font-weight: 700;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: normal;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-family: 'Courier New', monospace;
 }
 
 .trade-table {
     width: 100%;
+    font-family: 'Courier New', monospace;
 }
 
 .trade-table-header {
     display: grid;
     grid-template-columns: 90px 70px 110px 110px 90px;
     column-gap: 8px;
-    color: #94a3b8;
-    font-size: 12px;
-    font-weight: 700;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 10px;
+    font-weight: normal;
+    letter-spacing: 1px;
+    text-transform: uppercase;
     padding-bottom: 8px;
-    border-bottom: 1px solid #2a3441;
+    border-bottom: 1px solid var(--border-primary);
 }
 
 .trade-table-body {
@@ -1516,44 +1787,58 @@ body, html {
     grid-template-columns: 90px 70px 110px 110px 90px;
     column-gap: 8px;
     padding: 8px 0;
-    border-bottom: 1px solid #2a3441;
+    border-bottom: 1px solid rgba(0, 217, 255, 0.1);
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    transition: all 0.2s ease;
 }
 
 .trade-row:last-child {
     border-bottom: none;
 }
 
+.trade-row:hover {
+    background: rgba(0, 217, 255, 0.05);
+}
+
 .action-buy {
-    color: #22c55e;
-    font-weight: 700;
+    color: var(--color-success);
+    font-weight: normal;
+    text-shadow: 0 0 8px var(--color-success);
 }
 
 .action-sell {
-    color: #ef4444;
-    font-weight: 700;
+    color: var(--color-danger);
+    font-weight: normal;
+    text-shadow: 0 0 8px var(--color-danger);
 }
 
 /* Smooth hover/elevation effects */
 .wallet-card:hover, .position-card:hover, .results-card:hover {
-    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
-    transform: translateY(-1px);
+    border-color: var(--border-corner);
+    box-shadow: 0 0 15px rgba(0, 217, 255, 0.2);
 }
 
-.btn, .btn-stop, .timeframe-btn { transition: transform 0.2s ease, box-shadow 0.2s ease; }
-.btn:hover, .btn-stop:hover, .timeframe-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
+.btn, .btn-stop, .timeframe-btn { 
+    transition: all 0.2s ease; 
+}
 
-/* Flash effects for value updates */
+.btn:hover, .btn-stop:hover, .timeframe-btn:hover { 
+    box-shadow: 0 0 10px rgba(0, 217, 255, 0.3); 
+}
+
+/* Flash effects for value updates (MCRN Style) */
 .flash-green { animation: flash-success 0.3s ease; }
 .flash-red { animation: flash-error 0.3s ease; }
 
 @keyframes flash-success {
     0%, 100% { background-color: transparent; }
-    50% { background-color: rgba(34, 197, 94, 0.1); }
+    50% { background-color: rgba(0, 255, 136, 0.15); }
 }
 
 @keyframes flash-error {
     0%, 100% { background-color: transparent; }
-    50% { background-color: rgba(239, 68, 68, 0.1); }
+    50% { background-color: rgba(255, 82, 82, 0.15); }
 }
 
 /* Responsive adjustments */
